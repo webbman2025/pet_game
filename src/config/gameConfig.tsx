@@ -2,8 +2,7 @@ const basePath = "/3Care/eng/gamify/pet-game";
 
 export const gameConfig = {
     basePath,
-    campaignID: "gamehub",
-    campaignName: "pet-game",
+    campaignID: "pet-game",
 
     sounds: {
         // Background music
@@ -34,10 +33,10 @@ export const gameConfig = {
                 path: `${basePath}/sounds/spawn.mp3`,
                 volume: 1.0,
             },
-            },
+        },
 
             // Combo sounds (note: currently empty files, need actual audio content)
-            combo: {
+        combo: {
             x2: {
                 path: `${basePath}/sounds/combo-x2.mp3`,
                 volume: 1.0,

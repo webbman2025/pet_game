@@ -27,6 +27,7 @@
       "@config/*": ["./src/config/*"],
       "@hocs/*": ["./src/hocs/*"],
       "@hooks/*": ["./src/hooks/*"],
+      "@pages/*": ["./src/pages/*"],
       "@models/*": ["./src/models/*"],
       "@schemas/*": ["./src/schemas/*"],
       "@styles/*": ["./src/styles/*"],

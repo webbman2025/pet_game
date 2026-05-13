@@ -1,590 +1,477 @@
-import { useEffect, useState } from 'react'
-import './App.css'
+"use client";
 
-type ActionKey = 'feed' | 'walk' | 'spa'
-type TaskCounts = Record<ActionKey, number>
+import { Box } from "@mui/material";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import Home from "@pages/Home";
+import FeedGame from "@pages/FeedGame";
+import WalkGame from "@pages/WalkGame";
+import SpaGame from "@pages/SpaGame";
 
-type StoredGameData = {
-  petName: string
-  tutorialComplete: boolean
-  satisfaction: number
-  points: number
-  tasks: TaskCounts
-  feedAvailableAt: number | null
-  walkAvailableAt: number | null
-  spaAvailableAt: number | null
-  bonusAwarded: boolean
-  lastResetDay: string
-  nextPoopAt: number | null
-  poopVisible: boolean
-  poopExpiresAt: number | null
-}
+import { GameState } from "@components/GameState";
+import { gameConfig } from "@config/gameConfig";
+import { useRouter } from "next/navigation";
+import { useLanguage, getLangAssets } from "@hooks/useLanguage";
 
-const STORAGE_KEY = 'pet-game-data-v1'
+export default function App() {
+  const lang = useLanguage();
+  const assets = getLangAssets(lang);
 
-const actions = [
-  {
-    key: 'feed' as const,
-    label: 'Feed',
-    satisfaction: 10,
-    points: 5,
-    target: 3,
-    description: 'Feed your dog to keep energy high.',
-  },
-  {
-    key: 'walk' as const,
-    label: 'Walk',
-    satisfaction: 12,
-    points: 8,
-    target: 2,
-    description: 'A walk raises mood and happiness.',
-  },
-  {
-    key: 'spa' as const,
-    label: 'Spa',
-    satisfaction: 14,
-    points: 12,
-    target: 1,
-    description: 'A spa session refreshes your dog.',
-  },
-]
+  // Configuration - now imported from centralized config
+  const { items, comboPopups: comboPopupImages } = assets;
+  const { sounds } = gameConfig;
+  const [page, setPage] = useState<"home" | "feedGame" | "walkGame" | "spaGame" | "result">("home");
+  const [audioOn, setAudioOn] = useState(true);
+  const [isFirstEntry, setIsFirstEntry] = useState(false);
 
-const tutorialSteps = [
-  {
-    title: 'Welcome to your dog care game!',
-    text: 'Name your dog and learn how to keep it happy with daily actions.',
-  },
-  {
-    title: 'Daily Tasks',
-    text: 'Complete Walk × 2, Feed × 3, and Spa × 1 each day to earn points.',
-  },
-  {
-    title: 'Cooldowns & Events',
-    text: 'Feed has a 2-hour cooldown, Walk locks after 2 walks for 30 minutes, and Spa resets tomorrow. Clean poop to prevent satisfaction loss.',
-  },
-  {
-    title: 'Earn Rewards',
-    text: 'Keep satisfaction high and complete all tasks for bonus points and top-ranking prizes.',
-  },
-]
+  const [gameState, setGameState] = useState<GameState>({
+    point: 0,
+    satisfaction: 100,
+    petName: "",
+    game1Complete: false,
+    game1PlayTimes: 0,
+    game1Timer: 0,
+    game2Complete: false,
+    game2PlayTimes: 0,
+    game2Timer: 0,
+    game3Complete: false,
+    game3PlayTimes: 0,
+    game3Timer: 0,
+    poopCount: 0
+  });
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.max(min, Math.min(max, value))
 
-const getTodayString = () => new Date().toISOString().slice(0, 10)
+  // Audio Context setup with useRef to persist across renders
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const pauseTimeRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
+  const shouldBePlayingRef = useRef<boolean>(false); // Track if audio should be playing
+  
 
-const getTomorrowStart = () => {
-  const next = new Date()
-  next.setHours(24, 0, 0, 0)
-  return next.getTime()
-}
-
-const formatTimeRemaining = (durationMs: number) => {
-  if (durationMs <= 0) return 'Ready'
-  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000))
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
+  window.onload = () => {
+    document.addEventListener('touchstart', (event) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    });
+    
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (event) => {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
   }
-  return `${minutes}m ${seconds}s`
-}
 
-const getRandomPoopSpawn = () => Date.now() + Math.floor(Math.random() * 25000 + 20000)
-
-function App() {
-  const [loaded, setLoaded] = useState(false)
-  const [petName, setPetName] = useState('')
-  const [pendingName, setPendingName] = useState('')
-  const [screen, setScreen] = useState<'entry' | 'tutorial' | 'home'>('entry')
-  const [tutorialStep, setTutorialStep] = useState(0)
-  const [tutorialComplete, setTutorialComplete] = useState(false)
-  const [satisfaction, setSatisfaction] = useState(68)
-  const [points, setPoints] = useState(25)
-  const [tasks, setTasks] = useState<TaskCounts>({ feed: 0, walk: 0, spa: 0 })
-  const [feedAvailableAt, setFeedAvailableAt] = useState<number | null>(null)
-  const [walkAvailableAt, setWalkAvailableAt] = useState<number | null>(null)
-  const [spaAvailableAt, setSpaAvailableAt] = useState<number | null>(null)
-  const [bonusAwarded, setBonusAwarded] = useState(false)
-  const [lastResetDay, setLastResetDay] = useState(getTodayString())
-  const [gameMode, setGameMode] = useState<'none' | 'treat' | 'frisbee'>('none')
-  const [treatClicks, setTreatClicks] = useState(0)
-  const [treatGoal, setTreatGoal] = useState(0)
-  const [frisbeeClicks, setFrisbeeClicks] = useState(0)
-  const [frisbeeGoal, setFrisbeeGoal] = useState(0)
-  const [poopVisible, setPoopVisible] = useState(false)
-  const [poopExpiresAt, setPoopExpiresAt] = useState<number | null>(null)
-  const [nextPoopAt, setNextPoopAt] = useState<number>(getRandomPoopSpawn)
-  const [message, setMessage] = useState('Welcome! Take care of your dog and play mini-games to earn points.')
-  const [timeNow, setTimeNow] = useState(Date.now())
-
+  // Initialize AudioContext and load audio
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY)
-    const today = getTodayString()
-
-    if (saved) {
+    const initAudio = async () => {
       try {
-        const parsed = JSON.parse(saved) as StoredGameData
-        const parsedLastResetDay = parsed.lastResetDay ?? today
+        // Create AudioContext
+        audioContextRef.current = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
 
-        setPetName(parsed.petName || '')
-        setTutorialComplete(parsed.tutorialComplete ?? false)
-        setSatisfaction(parsed.satisfaction ?? 68)
-        setPoints(parsed.points ?? 25)
-        setTasks(parsed.tasks ?? { feed: 0, walk: 0, spa: 0 })
-        setFeedAvailableAt(parsed.feedAvailableAt ?? null)
-        setWalkAvailableAt(parsed.walkAvailableAt ?? null)
-        setSpaAvailableAt(parsed.spaAvailableAt ?? null)
-        setBonusAwarded(parsed.bonusAwarded ?? false)
-        setLastResetDay(parsedLastResetDay)
-        setNextPoopAt(parsed.nextPoopAt ?? getRandomPoopSpawn())
-        setPoopVisible(parsed.poopVisible ?? false)
-        setPoopExpiresAt(parsed.poopExpiresAt ?? null)
-        setScreen(parsed.tutorialComplete ? 'home' : 'tutorial')
+        // Create gain node for volume control
+        let tempBackgroundSound = sounds.background;
+        gainNodeRef.current = audioContextRef.current.createGain();
+        gainNodeRef.current.gain.value = tempBackgroundSound.volume;
+        gainNodeRef.current.connect(audioContextRef.current.destination);
 
-        if (today !== parsedLastResetDay) {
-          setTasks({ feed: 0, walk: 0, spa: 0 })
-          setBonusAwarded(false)
-          setSpaAvailableAt(null)
-          setWalkAvailableAt(null)
-          setLastResetDay(today)
-          setMessage('Welcome to a fresh day! Your daily tasks are ready.')
+        // Load and decode audio file
+        const response = await fetch(tempBackgroundSound.path);
+        const arrayBuffer = await response.arrayBuffer();
+        audioBufferRef.current = await audioContextRef.current.decodeAudioData(
+          arrayBuffer
+        );
+
+        controlAudio();
+      } catch (error) {
+        console.warn("Failed to initialize audio:", error);
+      }
+    };
+    
+    initAudio();
+
+    // Cleanup on unmount
+    return () => {
+      if (audioSourceRef.current) {
+        audioSourceRef.current.stop();
+        audioSourceRef.current.disconnect();
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [page]);
+
+  // Disable mobile browser zoom
+  useEffect(() => {
+    document.body.style.zoom = "1";
+    const eventListener = (e: any) => {
+      e.preventDefault();
+      // special hack to prevent zoom-to-tabs gesture in safari
+      document.body.style.zoom = "1";
+    };
+
+    document.addEventListener("gesturestart", eventListener);
+    document.addEventListener("gesturechange", eventListener);
+    document.addEventListener("gestureend", eventListener);
+    return () => {
+      document.removeEventListener("gesturestart", eventListener);
+      document.removeEventListener("gesturechange", eventListener);
+      document.removeEventListener("gestureend", eventListener);
+    };
+  }, []);
+
+  // Helper function to get current audio position
+  const getCurrentAudioPosition = (): number => {
+    if (
+      !audioContextRef.current ||
+      !audioBufferRef.current ||
+      !isPlayingRef.current
+    ) {
+      return pauseTimeRef.current;
+    }
+
+    const elapsed = audioContextRef.current.currentTime - startTimeRef.current;
+    return elapsed % audioBufferRef.current.duration;
+  };
+
+  // Audio control functions
+  const playAudio = async (
+    playbackRate: number = 1,
+    preservePosition: boolean = false
+  ) => {
+    if (
+      !audioContextRef.current ||
+      !audioBufferRef.current ||
+      !gainNodeRef.current
+    )
+      return;
+
+    try {
+      // Resume AudioContext if suspended (common on iOS)
+      if (audioContextRef.current.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
+
+      // Get current position before stopping if we want to preserve it
+      const currentPosition = preservePosition
+        ? getCurrentAudioPosition()
+        : pauseTimeRef.current;
+
+      // Completely clean up any previous source instance
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.stop();
+        } catch (error) {
+          // Ignore errors if source is already stopped
+          console.warn("Failed to stop audio source:", error);
         }
-      } catch {
-        setScreen('entry')
+        audioSourceRef.current.disconnect();
+        audioSourceRef.current.onended = null; // Clear event handler
+        audioSourceRef.current = null; // Nullify reference
       }
+
+      // Reset state to ensure clean start
+      isPlayingRef.current = false;
+
+      // Create completely new source instance
+      audioSourceRef.current = audioContextRef.current.createBufferSource();
+      audioSourceRef.current.buffer = audioBufferRef.current;
+      audioSourceRef.current.loop = true;
+      audioSourceRef.current.playbackRate.value = playbackRate;
+      audioSourceRef.current.connect(gainNodeRef.current);
+
+      // Start from current position, pause time, or beginning
+      const offset = currentPosition % audioBufferRef.current.duration;
+      audioSourceRef.current.start(0, offset);
+      startTimeRef.current = audioContextRef.current.currentTime - offset;
+      isPlayingRef.current = true;
+      shouldBePlayingRef.current = true;
+
+      // Handle source ending (shouldn't happen with loop, but just in case)
+      audioSourceRef.current.onended = () => {
+        isPlayingRef.current = false;
+        audioSourceRef.current = null; // Clean up reference when ended
+      };
+    } catch (error) {
+      console.warn("Failed to play audio:", error);
+      // Ensure clean state even on error
+      isPlayingRef.current = false;
+      if (audioSourceRef.current) {
+        audioSourceRef.current = null;
+      }
+    }
+  };
+
+  const pauseAudio = () => {
+    if (
+      audioSourceRef.current &&
+      isPlayingRef.current &&
+      audioContextRef.current
+    ) {
+      // Calculate current position
+      const elapsed =
+        audioContextRef.current.currentTime - startTimeRef.current;
+      pauseTimeRef.current = elapsed;
+
+      audioSourceRef.current.stop();
+      audioSourceRef.current.disconnect();
+      audioSourceRef.current = null;
+      isPlayingRef.current = false;
+    }
+  };
+
+  // Function to change playback rate without restarting from beginning
+  const changePlaybackRate = async (newRate: number) => {
+    if (audioOn && audioBufferRef.current && shouldBePlayingRef.current) {
+      await playAudio(newRate, true); // preservePosition = true
+    }
+  };
+
+  // Handle audio playback based on audioOn state
+  const controlAudio = () => {
+    if (audioOn && audioBufferRef.current) {
+      shouldBePlayingRef.current = true;
+      playAudio(1);
     } else {
-      setScreen('entry')
+      shouldBePlayingRef.current = false;
+      pauseAudio();
     }
-
-    setLoaded(true)
-  }, [])
+  }; // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!loaded) return
-    const stored: StoredGameData = {
-      petName,
-      tutorialComplete,
-      satisfaction,
-      points,
-      tasks,
-      feedAvailableAt,
-      walkAvailableAt,
-      spaAvailableAt,
-      bonusAwarded,
-      lastResetDay,
-      nextPoopAt,
-      poopVisible,
-      poopExpiresAt,
-    }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
-  }, [
-    loaded,
-    petName,
-    tutorialComplete,
-    satisfaction,
-    points,
-    tasks,
-    feedAvailableAt,
-    walkAvailableAt,
-    spaAvailableAt,
-    bonusAwarded,
-    lastResetDay,
-    nextPoopAt,
-    poopVisible,
-    poopExpiresAt,
-  ])
+    controlAudio();
+  }, [audioOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Check AudioContext state periodically and attempt to resume if needed
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setTimeNow(Date.now())
-    }, 1000)
-    return () => window.clearInterval(interval)
-  }, [])
+    const checkAudioContext = async () => {
+      // Don't interfere if document is hidden
+      if (document.hidden) return;
 
-  useEffect(() => {
-    if (!loaded) return
-    const now = Date.now()
-    const today = getTodayString()
-
-    if (today !== lastResetDay) {
-      setTasks({ feed: 0, walk: 0, spa: 0 })
-      setBonusAwarded(false)
-      setSpaAvailableAt(null)
-      setWalkAvailableAt(null)
-      setLastResetDay(today)
-      setMessage('A new day has started. Daily tasks have been reset.')
-    }
-
-    if (poopVisible && poopExpiresAt && now >= poopExpiresAt) {
-      setPoopVisible(false)
-      setPoopExpiresAt(null)
-      setNextPoopAt(getRandomPoopSpawn())
-      setSatisfaction((value) => clamp(value - 7, 0, 100))
-      setMessage('Uh oh! Poop was ignored. Satisfaction dropped.')
-    }
-
-    if (!poopVisible && nextPoopAt && now >= nextPoopAt) {
-      setPoopVisible(true)
-      setPoopExpiresAt(now + 30000)
-      setMessage('Poop appeared! Clean it quickly to avoid losing satisfaction.')
-    }
-  }, [loaded, timeNow, poopVisible, poopExpiresAt, nextPoopAt, lastResetDay])
-
-  useEffect(() => {
-    if (!loaded) return
-    const allTasksDone = tasks.feed >= 3 && tasks.walk >= 2 && tasks.spa >= 1
-    if (allTasksDone && satisfaction >= 100 && !bonusAwarded) {
-      setBonusAwarded(true)
-      setPoints((value) => value + 20)
-      setMessage('Perfect day! All tasks done with 100% satisfaction. Bonus awarded.')
-    }
-  }, [tasks.feed, tasks.walk, tasks.spa, satisfaction, bonusAwarded, loaded])
-
-  const feedCooldown = feedAvailableAt && timeNow < feedAvailableAt ? feedAvailableAt - timeNow : 0
-  const walkCooldown = walkAvailableAt && timeNow < walkAvailableAt ? walkAvailableAt - timeNow : 0
-  const spaCooldown = spaAvailableAt && timeNow < spaAvailableAt ? spaAvailableAt - timeNow : 0
-
-  const isFeedAvailable = tasks.feed < 3 && feedCooldown === 0
-  const isWalkAvailable = tasks.walk < 2 && walkCooldown === 0
-  const isSpaAvailable = tasks.spa < 1 && spaCooldown === 0
-
-  const savePetName = () => {
-    const trimmed = pendingName.trim()
-    if (!trimmed) return
-    setPetName(trimmed)
-    setPendingName('')
-    setScreen('tutorial')
-    setMessage(`Welcome, ${trimmed}! Let's learn how to care for your dog.`)
-  }
-
-  const advanceTutorial = () => {
-    if (tutorialStep < tutorialSteps.length - 1) {
-      setTutorialStep((step) => step + 1)
-      return
-    }
-    setTutorialComplete(true)
-    setScreen('home')
-    setMessage(`Great! ${petName} is ready for their first day of care.`)
-  }
-
-  const resetDay = () => {
-    setTasks({ feed: 0, walk: 0, spa: 0 })
-    setBonusAwarded(false)
-    setSpaAvailableAt(null)
-    setWalkAvailableAt(null)
-    setLastResetDay(getTodayString())
-    setMessage('A new day begins! Daily tasks are reset so you can care for your dog again.')
-  }
-
-  const completeAction = (action: (typeof actions)[number]) => {
-    const now = Date.now()
-
-    if (action.key === 'feed' && !isFeedAvailable) {
-      setMessage(feedCooldown > 0 ? `Feed is on cooldown for ${formatTimeRemaining(feedCooldown)}.` : 'Feed is already complete for today.')
-      return
-    }
-
-    if (action.key === 'walk' && !isWalkAvailable) {
-      setMessage(walkCooldown > 0 ? `Walk is on cooldown for ${formatTimeRemaining(walkCooldown)}.` : 'Walk is already complete for today.')
-      return
-    }
-
-    if (action.key === 'spa' && !isSpaAvailable) {
-      setMessage(spaCooldown > 0 ? `Spa is not ready until ${formatTimeRemaining(spaCooldown)}.` : 'Spa is already complete for today.')
-      return
-    }
-
-    setTasks((prev) => ({
-      ...prev,
-      [action.key]: prev[action.key] + 1,
-    }))
-    setSatisfaction((value) => clamp(value + action.satisfaction, 0, 100))
-    setPoints((value) => value + action.points)
-
-    if (action.key === 'feed') {
-      setFeedAvailableAt(now + 2 * 60 * 60 * 1000)
-      setMessage(`Feed completed. Satisfaction +${action.satisfaction}. Next feed available in 2 hours.`)
-    }
-
-    if (action.key === 'walk') {
-      const nextWalkCount = tasks.walk + 1
-      if (nextWalkCount >= 2) {
-        setWalkAvailableAt(now + 30 * 60 * 1000)
-        setMessage(`Walk completed. Satisfaction +${action.satisfaction}. Walk is on cooldown for 30 minutes.`)
-      } else {
-        setMessage(`Walk completed. Satisfaction +${action.satisfaction}. One more walk to finish the task.`)
+      if (audioContextRef.current && shouldBePlayingRef.current) {
+        if (audioContextRef.current.state === "suspended") {
+          console.log(
+            "Periodic check: AudioContext is suspended, waiting for user interaction"
+          );
+        } else if (
+          audioContextRef.current.state === "running" &&
+          !isPlayingRef.current
+        ) {
+          // AudioContext is running but audio isn't playing - restart it
+          console.log("Periodic check: Restarting audio playback");
+          playAudio(1);
+        }
       }
-    }
+    };
 
-    if (action.key === 'spa') {
-      setSpaAvailableAt(getTomorrowStart())
-      setMessage(`Spa completed. Satisfaction +${action.satisfaction}. Spa resets tomorrow.`)
-    }
-  }
+    const interval = setInterval(checkAudioContext, 1000);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const startTreatGame = () => {
-    const nextGoal = Math.floor(Math.random() * 3) + 3
-    setTreatGoal(nextGoal)
-    setTreatClicks(0)
-    setGameMode('treat')
-    setMessage(`Treat Toss started! Click exactly ${nextGoal} times for a bonus.`)
-  }
+  // Handle iOS autoplay restrictions - resume audio on user interaction
+  useEffect(() => {
+    const handleUserInteraction = async () => {
+      // Don't interfere if document is hidden
+      if (document.hidden) return;
 
-  const playTreat = () => {
-    setTreatClicks((current) => {
-      const next = current + 1
-      if (next === treatGoal) {
-        setPoints((value) => value + 18)
-        setSatisfaction((value) => clamp(value + 10, 0, 100))
-        setGameMode('none')
-        setMessage('Perfect toss! Your dog loved it and earned 18 points.')
-      } else if (next > treatGoal) {
-        setPoints((value) => value + 6)
-        setSatisfaction((value) => clamp(value + 4, 0, 100))
-        setGameMode('none')
-        setMessage('Too many treats, but you still earned some points.')
-      } else {
-        setMessage(`Good toss! ${treatGoal - next} more clicks to win.`)
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state === "suspended" &&
+        shouldBePlayingRef.current
+      ) {
+        try {
+          console.log("User interaction: Resuming suspended AudioContext");
+          await audioContextRef.current.resume();
+          if (shouldBePlayingRef.current && !isPlayingRef.current) {
+            playAudio(1);
+          }
+        } catch (error) {
+          console.warn("Failed to resume audio context:", error);
+        }
       }
-      return next
-    })
-  }
+    };
 
-  const startFrisbeeGame = () => {
-    const nextGoal = Math.floor(Math.random() * 5) + 7
-    setFrisbeeGoal(nextGoal)
-    setFrisbeeClicks(0)
-    setGameMode('frisbee')
-    setMessage(`Frisbee Catch started! Click ${nextGoal} times before your dog gets bored.`)
-  }
+    // Listen for various user interaction events
+    const events = ["touchstart", "touchend", "mousedown", "keydown", "click"];
+    events.forEach((event) => {
+      document.addEventListener(event, handleUserInteraction, {
+        once: true,
+        passive: true,
+      });
+    });
 
-  const playFrisbee = () => {
-    setFrisbeeClicks((current) => {
-      const next = current + 1
-      if (next >= frisbeeGoal) {
-        setPoints((value) => value + 22)
-        setSatisfaction((value) => clamp(value + 12, 0, 100))
-        setGameMode('none')
-        setMessage('Great catch! You finished the frisbee game and gained 22 points.')
-      } else {
-        setPoints((value) => value + 2)
-        setSatisfaction((value) => clamp(value + 1, 0, 100))
-        setMessage(`Catch count: ${next}/${frisbeeGoal}. Keep going!`)
+    // Cleanup
+    return () => {
+      events.forEach((event) => {
+        document.removeEventListener(event, handleUserInteraction);
+      });
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle background to foreground transition
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      console.log(
+        "Visibility change handler - hidden:",
+        document.hidden,
+        "AudioContext state:",
+        audioContextRef.current?.state,
+        "shouldBePlaying:",
+        shouldBePlayingRef.current,
+        "isPlaying:",
+        isPlayingRef.current
+      );
+
+      if (document.hidden) {
+        // Page is now hidden - pause audio if playing
+        if (isPlayingRef.current) {
+          console.log("Visibility handler: Page hidden - pausing audio");
+          pauseAudio();
+        }
+      } else if (
+        !document.hidden &&
+        shouldBePlayingRef.current &&
+        audioContextRef.current
+      ) {
+        // Page is now visible and audio should be playing
+        console.log(
+          "Visibility handler: Page is now visible and audio should be playing"
+        );
+        try {
+          if (audioContextRef.current.state === "suspended") {
+            console.log(
+              "Visibility handler: Attempting to resume suspended AudioContext"
+            );
+            await audioContextRef.current.resume();
+          }
+
+          // If AudioContext is running but audio isn't playing, restart it
+          if (
+            audioContextRef.current.state === "running" &&
+            !isPlayingRef.current
+          ) {
+            console.log("Visibility handler: Restarting audio playback");
+            playAudio(1);
+          }
+        } catch (error) {
+          console.warn("Failed to resume audio on visibility change:", error);
+        }
       }
-      return next
-    })
-  }
+    };
 
-  const cleanPoop = () => {
-    setPoopVisible(false)
-    setPoopExpiresAt(null)
-    setNextPoopAt(getRandomPoopSpawn())
-    setPoints((value) => value + 4)
-    setMessage('Nice! You cleaned the poop and prevented a satisfaction loss.')
-  }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-  if (!loaded) {
-    return <div className="app-shell">Loading...</div>
-  }
+    // Cleanup - removed focus event listener to avoid conflicts
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (screen === 'entry') {
-    return (
-      <div className="app-shell entry-screen">
-        <section className="hero-card">
-          <div className="hero-avatar">🐶</div>
-          <div className="hero-info">
-            <h1>Welcome to Pet Care Adventure</h1>
-            <p>First time here? Give your dog a name and start the tutorial.</p>
-          </div>
-        </section>
-        <div className="card-panel">
-          <label htmlFor="pet-name">Pet name</label>
-          <input
-            id="pet-name"
-            type="text"
-            value={pendingName}
-            onChange={(event) => setPendingName(event.target.value)}
-            placeholder="Enter your dog's name"
-          />
-          <button type="button" className="action-button" onClick={savePetName}>
-            Save name and continue
-          </button>
-        </div>
-      </div>
-    )
-  }
+  // Fetch user's highest score from API on component mount
+  const fetchGameState = async () => {
+    try {
+      const response = await axios.get(
+        "/3Care/GamifyPetGameState.do",
+        {
+          params: {
+            campaignID: gameConfig.campaignID
+          },
+        }
+      );
+      if (response.data && response.data.code === 200) {
+        setIsFirstEntry(response.data.firstEntry === "true");
+        setGameState({
+          point: response.data.point || 0,
+          satisfaction: response.data.satisfaction || 0,
+          petName: response.data.petName || "",
+          game1Complete: response.data.game1Complete === "true",
+          game1PlayTimes: response.data.game1PlayTimes || 0,
+          game1Timer: response.data.game1Timer || 0,
+          game2Complete: response.data.game2Complete === "true",
+          game2PlayTimes: response.data.game2PlayTimes || 0,
+          game2Timer: response.data.game2Timer || 0,
+          game3Complete: response.data.game3Complete === "true",
+          game3PlayTimes: response.data.game3PlayTimes || 0,
+          game3Timer: response.data.game3Timer || 0,
+          poopCount: response.data.poopCount || 0
+        });
+      } else {
+        console.warn("API returned non-success code:", response.data);
+        window.location.reload(); // Reload page if API fails
+      }
+    } catch (error) {
+      console.error("Error fetching highest score:", error);
+    }
+  };
 
-  if (screen === 'tutorial') {
-    const step = tutorialSteps[tutorialStep]
-    return (
-      <div className="app-shell tutorial-screen">
-        <section className="hero-card">
-          <div className="hero-avatar">🐶</div>
-          <div className="hero-info">
-            <h1>{petName}'s Tutorial</h1>
-            <p>Learn the basics before you start playing.</p>
-          </div>
-        </section>
-        <div className="card-panel">
-          <h2>{step.title}</h2>
-          <p>{step.text}</p>
-          <div className="tutorial-actions">
-            <button
-              type="button"
-              className="ghost-button"
-              onClick={() => setTutorialStep((step) => Math.max(0, step - 1))}
-              disabled={tutorialStep === 0}
-            >
-              Back
-            </button>
-            <button type="button" className="action-button" onClick={advanceTutorial}>
-              {tutorialStep === tutorialSteps.length - 1 ? 'Finish tutorial' : 'Next'}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => {
+    fetchGameState();
+  }, []);
+
+  const handleFeedGame = () => {
+    setPage("feedGame");
+  };
+
+  const handleWalkGame = () => {
+    setPage("walkGame");
+  };
+
+  const handleSpaGame = () => {
+    setPage("spaGame");
+  };
+
+  const handleBackToMenu = () => {
+    setPage("home");
+  };
+
+  const router = useRouter();
 
   return (
-    <div className="app-shell">
-      <header className="hero-card">
-        <div className="hero-avatar" aria-hidden="true">🐶</div>
-        <div className="hero-info">
-          <h1>{petName}'s Home</h1>
-          <p>Take care of your dog with daily actions and mini-games.</p>
-        </div>
-        <div className="score-card">
-          <div className="score-pill">{points} points</div>
-        </div>
-      </header>
-
-      {poopVisible && (
-        <div className="poop-banner">
-          <span>💩 Poop appeared! Clean it before your dog gets unhappy.</span>
-          <button type="button" className="ghost-button" onClick={cleanPoop}>
-            Clean Poop
-          </button>
-        </div>
+    <Box id="root">
+      {page === "home" && (
+        <Home
+          audioOn={audioOn} 
+          setAudioOn={setAudioOn}
+          onFeed={handleFeedGame}
+          onWalk={handleWalkGame}
+          onSpa={handleSpaGame}
+          gameState={gameState}
+          isFirstEntry={isFirstEntry}
+        />
       )}
-
-      <section className="status-panel">
-        <div className="status-block">
-          <div className="status-label">Satisfaction</div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${satisfaction}%` }} />
-          </div>
-          <div className="status-value">{satisfaction}%</div>
-        </div>
-        <div className="status-block mini-game-summary">
-          <div className="status-label">Current game</div>
-          <div className="game-mode">
-            {gameMode === 'none' ? 'No game active' : gameMode === 'treat' ? 'Treat Toss' : 'Frisbee Catch'}
-          </div>
-          <div className="message-box">{message}</div>
-        </div>
-      </section>
-
-      <main className="game-grid">
-        <section className="tasks-panel">
-          <div className="panel-header">
-            <h2>Daily Tasks</h2>
-            <button type="button" className="ghost-button" onClick={resetDay}>
-              Reset Day
-            </button>
-          </div>
-          <div className="task-list">
-            {actions.map((action) => {
-              const count = tasks[action.key]
-              const target = action.target
-              const isDisabled =
-                action.key === 'feed'
-                  ? !isFeedAvailable
-                  : action.key === 'walk'
-                  ? !isWalkAvailable
-                  : !isSpaAvailable
-              const cooldownText =
-                action.key === 'feed' && !isFeedAvailable
-                  ? formatTimeRemaining(feedCooldown)
-                  : action.key === 'walk' && !isWalkAvailable
-                  ? formatTimeRemaining(walkCooldown)
-                  : action.key === 'spa' && !isSpaAvailable
-                  ? formatTimeRemaining(spaCooldown)
-                  : ''
-
-              return (
-                <div key={action.key} className="task-item">
-                  <div>
-                    <strong>{action.label}</strong>
-                    <p>{action.description}</p>
-                  </div>
-                  <div className="task-controls">
-                    <div>
-                      <span>
-                        {count}/{target}
-                      </span>
-                      {cooldownText && <div className="cooldown-text">{cooldownText}</div>}
-                    </div>
-                    <button
-                      type="button"
-                      className="action-button"
-                      onClick={() => completeAction(action)}
-                      disabled={isDisabled}
-                    >
-                      {count >= target ? 'Done' : action.label}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="mini-games-panel">
-          <h2>Mini Games</h2>
-          <div className="game-actions">
-            <button type="button" className="action-button" onClick={startTreatGame}>
-              Start Treat Toss
-            </button>
-            <button type="button" className="action-button" onClick={startFrisbeeGame}>
-              Start Frisbee Catch
-            </button>
-          </div>
-
-          <div className="game-play">
-            {gameMode === 'treat' && (
-              <>
-                <p>Click the treat button exactly {treatGoal} times.</p>
-                <button type="button" className="action-button" onClick={playTreat}>
-                  Toss Treat
-                </button>
-                <p>Clicks: {treatClicks}/{treatGoal}</p>
-              </>
-            )}
-            {gameMode === 'frisbee' && (
-              <>
-                <p>Catch the frisbee {frisbeeGoal} times.</p>
-                <button type="button" className="action-button" onClick={playFrisbee}>
-                  Catch Frisbee
-                </button>
-                <p>Clicks: {frisbeeClicks}/{frisbeeGoal}</p>
-              </>
-            )}
-            {gameMode === 'none' && (
-              <p>Choose a mini-game to earn bonus points and boost happiness.</p>
-            )}
-            {!poopVisible && (
-              <p className="small-note">
-                Next random clean-up event in {formatTimeRemaining(Math.max(0, nextPoopAt - timeNow))}.
-              </p>
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
-  )
+      {page === "feedGame" && (
+        <FeedGame
+          gameState={gameState}
+          audioOn={audioOn}
+          setAudioOn={setAudioOn}
+          onBackToMenu={handleBackToMenu}
+        />
+      )}
+      {page === "walkGame" && (
+        <WalkGame
+          gameState={gameState}
+          audioOn={audioOn}
+          setAudioOn={setAudioOn}
+          onBackToMenu={handleBackToMenu}
+        />
+      )}
+      {page === "spaGame" && (
+        <SpaGame
+          gameState={gameState}
+          audioOn={audioOn}
+          setAudioOn={setAudioOn}
+          onBackToMenu={handleBackToMenu}
+        />
+      )}
+    </Box>
+  );
 }
-
-export default App
