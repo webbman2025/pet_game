@@ -1,9 +1,8 @@
-import styles from "@styles/SpaGame.module.scss";
-import { gameConfig } from "@config/gameConfig";
-import Typography from "@mui/material/Typography";
+import styles from "@/styles/SpaGame.module.scss";
+import { gameConfig } from "@/config/gameConfig";
 import { useEffect, useState } from "react";
-import { formatNumberWithCommas } from "@utils/index";
-import { useLanguage, getLangAssets } from "@hooks/useLanguage";
+import { formatNumberWithCommas } from "@/utils/index";
+import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import { GameState } from "@/components/GameState";
 
 interface SpaGameProps {
@@ -11,6 +10,7 @@ interface SpaGameProps {
   setAudioOn: (audioOn: boolean) => void;
   gameState: GameState;
   onBackToMenu: () => void;
+  acquirePoint: (name: string, point: number, satifaction: number) => void;
 }
 
 const SpaGame: React.FC<SpaGameProps> = ({

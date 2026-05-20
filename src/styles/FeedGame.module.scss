@@ -1,0 +1,399 @@
+.root {
+    position: relative;
+    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_bg.png');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;    
+}
+
+.modalOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modalWrap {
+    width: min(330px, 90%);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 52px;
+}
+
+.modalDog {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 75px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.modalFrame {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+    z-index: 3;
+}
+
+.modalTop,
+.modalBottom,
+.modalCenter {
+    width: 100%;
+    display: block;
+}
+
+.modalCenter {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.modalCenterWrap {
+    position: relative;
+}
+
+.modalContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.modalTitle {
+    margin: 0 0 20px;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.modalText {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.modalPointText {
+    font-size: 36px;
+}
+
+.coinIcon {
+    width: 28px;
+    height: 30px;
+}
+
+.modalBtn {
+    position: relative;
+    margin-top: 20px;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 145px;
+    cursor: pointer;
+}
+
+.modalBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.modalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.gameTopBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    padding: 10px;
+}
+
+.timerContainer {
+    position: relative;
+    height: 40px;
+    width: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.timerBox {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.timerText {
+    position: relative;
+    z-index: 2;
+    font-size: 20px;
+    color: #fff;
+    margin-top: 2px;
+    margin-right: 10px;
+}
+
+.pointContainer {
+    position: relative;
+    height: 27px;
+    width: 71px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.pointBox {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.pointText {
+    position: relative;
+    z-index: 2;
+    font-size: 20px;
+    color: #fff;
+    margin-right: 10px;
+}
+
+.heartContainer {
+    position: relative;
+    width: 45%;
+    z-index: 2;
+}
+
+.heartBox {
+    width: 100%;
+}
+
+.hearts {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    top: 19%;
+    left: 12%;
+    gap: 4%;
+}
+
+.heart {
+    width: 23%;
+}
+
+.petImage {
+    position: absolute;
+    width: 109px;
+    height: 227px;
+    top: calc(50% - 45px);
+    left: 50%;
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.5s;
+}
+
+.hidePetImage {
+    opacity: 0;
+}
+
+.finishPetImage {
+    position: absolute;
+    width: 165.5px;
+    height: 227px;
+    top: calc(50% - 45px);
+    left: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.5s;
+}
+
+.showFinishPetImage {
+    opacity: 1;
+}
+
+.thinkingBubble {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-150px, -190px);
+}
+
+.answer {
+    position: absolute;
+    width: 58px;
+    height: 50px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-143px, -180px);
+}
+
+
+.msgBoxContainer {
+    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_msg_box.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    margin-top: auto;
+    padding: 12px 30px 21px 30px;
+}
+
+.optionsContainer {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+    padding: 10px 0;
+    gap: 10px;
+    min-height: 30vh;
+}
+
+.option {
+    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_option_box.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    width: 27%;
+    padding: 5px;
+}
+
+.option.correct {
+    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_option_box_correct.png');
+}
+
+.option.wrong {
+    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_option_box_wrong.png');
+}
+
+.optionImg {
+    width: 70px;
+    height: 60px;
+    justify-self: center;
+}
+
+
+.correctBg {
+    position: absolute;
+    width: 100%;
+    height: 40%;
+    background: linear-gradient(180deg, rgba(234, 133, 0, 0.5) 0%, rgba(234, 133, 0, 0) 100%);
+    top: 0;
+    left: 0;
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.showCorrectBg {
+    opacity: 1;
+    animation: fadeOutBg 1s forwards;
+}
+
+.plus10Text {
+    position: absolute;
+    width: 180px;
+    height: 90px;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(0);
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 1s;
+}
+
+.showPlus10 {
+    opacity: 1;
+    animation: correctTextFadeMove 1s forwards;
+}
+
+.failBg {
+    position: absolute;
+    width: 100%;
+    height: 40%;
+    background: linear-gradient(180deg, #000000 0%, rgba(0, 0, 0, 0) 100%);
+    top: 0;
+    left: 0;
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.showFailBg {
+    opacity: 1;
+    animation: fadeOutBg 1s forwards;
+}
+
+.failText {
+    position: absolute;
+    width: 110px;
+    height: 65px;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(0);
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 1s;
+}
+
+.showFailText {
+    opacity: 1;
+    animation: correctTextFadeMove 1s forwards;
+}
+
+.gameOverText {
+    position: absolute;
+    width: 280px;
+    height: 65px;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.showGameOver {
+    opacity: 1;
+}
+
+
+@keyframes correctTextFadeMove {
+    0% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+    80% { opacity: 1; transform: translate(-50%, -50%) translateY(30px); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(40px); }
+}
+
+@keyframes fadeOutBg {
+    0% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}

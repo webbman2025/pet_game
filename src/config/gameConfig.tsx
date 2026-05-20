@@ -1,4 +1,4 @@
-const basePath = "/3Care/eng/gamify/pet-game";
+const basePath = "/3Care/chi/gamify/pet-game";
 
 export const gameConfig = {
     basePath,
@@ -61,218 +61,102 @@ export const gameConfig = {
     // ==========================================
     chi: {
         assets: {
-            // Game item variants
-            items: [
-                `${basePath}/images/items-new-year-goldmoney.png`,
-                `${basePath}/images/items-new-year-80k.png`,
-                `${basePath}/images/items-new-year-chong.png`,
-                `${basePath}/images/items-new-year-dice.png`,
-                `${basePath}/images/items-new-year-fat.png`,
-                `${basePath}/images/items-new-year-horse.png`,
-                `${basePath}/images/items-new-year-lucky.png`,
-                //`${basePath}/images/items-pumpkin.png`,
-                //`${basePath}/images/items-ghost.png`,
-                //`${basePath}/images/items-empiremouth.png`,
-                //`${basePath}/images/items-mushroom.png`,
-                //`${basePath}/images/items-poison.png`,
-                //`${basePath}/images/items-black-candy.png`,
-                //`${basePath}/images/items-starfish.png`,
-                // `${basePath}/images/items-palm-tree.png`,
-                // `${basePath}/images/items-hat.png`,
-            ],
-
-            // Combo popup images
-            comboPopups: {
-                x2: `${basePath}/images/game-combo-x2.png`,
-                x3: `${basePath}/images/game-combo-x3.png`,
-                x4: `${basePath}/images/game-combo-x4.png`,
-                x5: `${basePath}/images/game-combo-super.png`, // for 5x and higher
-            },
-
             // UI images
             ui: {
-                // Game screen
-                gameBackground: `${basePath}/images/game-background.png`,
-                topBar: `${basePath}/images/game-top-bar.png`,
-                timeBarBackground: `${basePath}/images/time-bar-bg.png`,
-                timeBarBlue: `${basePath}/images/time-bar-blue.png`,
-                timeBarYellow: `${basePath}/images/time-bar-yellow.png`,
-                timeBarRed: `${basePath}/images/time-bar-red.png`,
+                primaryBtn: `${basePath}/images/primary_btn.png`,
+                modalTop: `${basePath}/images/modal_top.png`,
+                modalButtom: `${basePath}/images/modal_bottom.png`,
+                modalCenter: `${basePath}/images/modal_center.png`,
 
-                // Landing screen
-                landingBackground: `${basePath}/images/landing-bg.png`,
-                landingBackgroundCloud1: `${basePath}/images/travel-bg-cloud-1.png`,
-                landingBackgroundCloud2: `${basePath}/images/travel-bg-cloud-2.png`,
-                landingBackgroundCloud3: `${basePath}/images/travel-bg-cloud-3.png`,
-                landingBackgroundPlane: `${basePath}/images/travel-bg-plane.png`,
-                landingTitle: `${basePath}/images/landing-title.png`,
-                landingEventDetails: `${basePath}/images/landing-event-details.png`,
-                landingRoundGiftBox: `${basePath}/images/landing-round-gift-box.png`,
-                landingUserGameInfoBox: {
-                day0:  `${basePath}/images/landing-user-game-info-box-day-0.png`,
-                day1:  `${basePath}/images/landing-user-game-info-box-day-1.png`,
-                day2:  `${basePath}/images/landing-user-game-info-box-day-2.png`,
-                day3:  `${basePath}/images/landing-user-game-info-box-day-3.png`,
-                },
+                // home screen
+                homeBG: `${basePath}/images/home_bg.png`,
+                pet: `${basePath}/images/pet.png`,
+                coinIcon: `${basePath}/images/coin_icon.png`,
+                feedGameIcon: `${basePath}/images/feed_game_icon.png`,
+                walkGameIcon: `${basePath}/images/walk_game_icon.png`,
+                spaGameIcon: `${basePath}/images/spa_game_icon.png`,
+                poop: `${basePath}/images/poop.png`,
+                feedGameTaskIcon: `${basePath}/images/feed_game_task_icon.png`,
+                walkGameTaskIcon: `${basePath}/images/walk_game_task_icon.png`,
+                spaGameTaskIcon: `${basePath}/images/spa_game_task_icon.png`,
+                taskTickIcon: `${basePath}/images/task-tick.png`,
+                timerIcon: `${basePath}/images/timer-icon.svg`,
+                purpleLine: `${basePath}/images/purple_line.svg`,
 
-                // Buttons
-                audioOnButton: `${basePath}/images/audio-on-button.png`,
-                audioOffButton: `${basePath}/images/audio-off-button.png`,
-                playButton: `${basePath}/images/play-button.png`,
-                playNowButton: `${basePath}/images/play-now-button.png`,
-                playAgainButton: `${basePath}/images/play-again-button.png`,
-                instructionsButton: `${basePath}/images/instructions-button.png`,
-                leaderboardButton: `${basePath}/images/leaderboard-button.png`,
-                menuButton: `${basePath}/images/menu-button.png`,
-                resumeGameButton: `${basePath}/images/resume-game-button.png`,
-                restartGameButton: `${basePath}/images/restart-game-button.png`,
-                backToMenuButton: `${basePath}/images/back-to-menu-button.png`,
-                randomPrizeButton: `${basePath}/images/random-prize-btn.png`,
-                coomingSoonButton: `${basePath}/images/coming-soon-button.png`,
-                okButton: `${basePath}/images/ok-button.png`,
-                finishedButton: `${basePath}/images/finished-button.png`,
-
-                // Dialog titles
-                gameOverTitle: `${basePath}/images/game-over-title.png`,
-                gamePausedTitle: `${basePath}/images/game-paused-title.png`,
-                instructionsTitle: `${basePath}/images/instructions-title.png`,
-
-                // Game elements
-                itemHighlightBorder: `${basePath}/images/item-highlight-border.png`,
-                itemHighlightStar: `${basePath}/images/item-highlight-star.png`,
-                gamePoints: `${basePath}/images/game-points.png`,
-                instructionsAnimation: `${basePath}/images/instructions-animation.gif`,
-                instructionsTimeBar: `${basePath}/images/instructions-time-bar.png`,
-                instructionsGiftNumSample: `${basePath}/images/instructions-gift-num-sample.png`,
-                
-                checkInDialogCheckInBox: {
-                day1:  `${basePath}/images/check-in-box-day-1.png`,
-                day2:  `${basePath}/images/check-in-box-day-2.png`,
-                day3:  `${basePath}/images/check-in-box-day-3.png`,
-                },
-
-                checkInDialogCheckInTopBanner: {
-                day1:  `${basePath}/images/check-in-box-day-1-top-banner.png`,
-                day2:  `${basePath}/images/check-in-box-day-2-top-banner.png`,
-                day3:  `${basePath}/images/check-in-box-day-3-top-banner.png`,
-                },
-
-                giftBoxIcon: `${basePath}/images/xmas-giftbox.png`,
-
-                gameBottomGiftNumBar: `${basePath}/images/game-bottom-gift-num-bar.png`,
-
-                endDialogGiftBoxBg: `${basePath}/images/end-dialog-gift-box-bg.png`,
-
-                landingBackgroundBottom: `${basePath}/images/game-bg-bottom.png`,
+                // Feed game
+                feedGameBackground: `${basePath}/images/feed_game_bg.png`,
+                feedGamePumpkin: `${basePath}/images/feed_game_pumpkin.png`,
+                feedGameBroccoli: `${basePath}/images/feed_game_broccoli.png`,
+                feedGameEgg: `${basePath}/images/feed_game_egg.png`,
+                feedGameSalmon: `${basePath}/images/feed_game_salmon.png`,
+                feedGameDogKibble: `${basePath}/images/feed_game_dog_kibble.png`,
+                feedGameRice: `${basePath}/images/feed_game_rice.png`,
+                feedGameOptionBox: `${basePath}/images/feed_game_option_box.png`,
+                feedGameOptionBoxCorrect: `${basePath}/images/feed_game_option_box_correct.png`,
+                feedGameOptionBoxWrong: `${basePath}/images/feed_game_option_box_wrong.png`,
+                feedGameMsgBox: `${basePath}/images/feed_game_msg_box.png`,
+                feedGameFailText: `${basePath}/images/feed_game_fail_text.png`,
+                feedGameHeartBox: `${basePath}/images/feed_game_heart_box.png`,
+                feedGameHeart: `${basePath}/images/feed_game_heart.png`,
+                feedGamePointBox: `${basePath}/images/feed_game_point_box.png`,
+                feedGameTimerBox: `${basePath}/images/feed_game_timer_box.png`,
+                feedGameTimeUpText: `${basePath}/images/feed_game_tiemup_text.png`,
+                feedGameThinkingBubble: `${basePath}/images/feed_game_thinking_bubble.png`,
+                feedGameTimeoutDog: `${basePath}/images/feed_game_timeout_dog.png`,
+                feedGameFinishDog: `${basePath}/images/feed_game_finish_dog.png`,
+                feedGameBeginDog: `${basePath}/images/feed_game_begin_dog.png`,
+                feedGamePlus10Text: `${basePath}/images/feed_game_plus_10_text.png`,
             },
         },
     },
     
     eng: {
         assets: {
-            // Game item variants
-            items: [
-                `${basePath}/images/items-new-year-goldmoney.png`,
-                `${basePath}/images/items-new-year-80k.png`,
-                `${basePath}/images/items-new-year-chong.png`,
-                `${basePath}/images/items-new-year-dice.png`,
-                `${basePath}/images/items-new-year-fat.png`,
-                `${basePath}/images/items-new-year-horse.png`,
-                `${basePath}/images/items-new-year-lucky.png`,
-                //`${basePath}/images/items-pumpkin.png`,
-                //`${basePath}/images/items-ghost.png`,
-                //`${basePath}/images/items-empiremouth.png`,
-                //`${basePath}/images/items-mushroom.png`,
-                //`${basePath}/images/items-poison.png`,
-                //`${basePath}/images/items-black-candy.png`,
-                //`${basePath}/images/items-starfish.png`,
-                // `${basePath}/images/items-palm-tree.png`,
-                // `${basePath}/images/items-hat.png`,
-            ],
-
-            // Combo popup images
-            comboPopups: {
-                x2: `${basePath}/images/game-combo-x2.png`,
-                x3: `${basePath}/images/game-combo-x3.png`,
-                x4: `${basePath}/images/game-combo-x4.png`,
-                x5: `${basePath}/images/game-combo-super.png`, // for 5x and higher
-            },
-
             // UI images
             ui: {
-                // Game screen
-                gameBackground: `${basePath}/images/game-background.png`,
-                topBar: `${basePath}/images/game-top-bar.png`,
-                timeBarBackground: `${basePath}/images/time-bar-bg.png`,
-                timeBarBlue: `${basePath}/images/time-bar-blue.png`,
-                timeBarYellow: `${basePath}/images/time-bar-yellow.png`,
-                timeBarRed: `${basePath}/images/time-bar-red.png`,
+                primaryBtn: `${basePath}/images/primary_btn.png`,
+                modalTop: `${basePath}/images/modal_top.png`,
+                modalButtom: `${basePath}/images/modal_bottom.png`,
+                modalCenter: `${basePath}/images/modal_center.png`,
 
-                // Landing screen
-                landingBackground: `${basePath}/images/landing-bg.png`,
-                landingBackgroundCloud1: `${basePath}/images/travel-bg-cloud-1.png`,
-                landingBackgroundCloud2: `${basePath}/images/travel-bg-cloud-2.png`,
-                landingBackgroundCloud3: `${basePath}/images/travel-bg-cloud-3.png`,
-                landingBackgroundPlane: `${basePath}/images/travel-bg-plane.png`,
-                landingTitle: `${basePath}/images/landing-title.png`,
-                landingEventDetails: `${basePath}/images/landing-event-details.png`,
-                landingRoundGiftBox: `${basePath}/images/landing-round-gift-box.png`,
-                landingUserGameInfoBox: {
-                day0:  `${basePath}/images/landing-user-game-info-box-day-0.png`,
-                day1:  `${basePath}/images/landing-user-game-info-box-day-1.png`,
-                day2:  `${basePath}/images/landing-user-game-info-box-day-2.png`,
-                day3:  `${basePath}/images/landing-user-game-info-box-day-3.png`,
-                },
+                // Home screen
+                homeBG: `${basePath}/images/home_bg.png`,
+                pet: `${basePath}/images/pet.png`,
+                coinIcon: `${basePath}/images/coin_icon.png`,
+                feedGameIcon: `${basePath}/images/feed_game_icon.png`,
+                walkGameIcon: `${basePath}/images/walk_game_icon.png`,
+                spaGameIcon: `${basePath}/images/spa_game_icon.png`,
+                poop: `${basePath}/images/poop.png`,
+                feedGameTaskIcon: `${basePath}/images/feed_game_task_icon.png`,
+                walkGameTaskIcon: `${basePath}/images/walk_game_task_icon.png`,
+                spaGameTaskIcon: `${basePath}/images/spa_game_task_icon.png`,
+                taskTickIcon: `${basePath}/images/task-tick.png`,
+                timerIcon: `${basePath}/images/timer-icon.svg`,
+                purpleLine: `${basePath}/images/purple_line.svg`,
 
-                // Buttons
-                audioOnButton: `${basePath}/images/audio-on-button.png`,
-                audioOffButton: `${basePath}/images/audio-off-button.png`,
-                playButton: `${basePath}/images/play-button.png`,
-                playNowButton: `${basePath}/images/play-now-button.png`,
-                playAgainButton: `${basePath}/images/play-again-button.png`,
-                instructionsButton: `${basePath}/images/instructions-button.png`,
-                leaderboardButton: `${basePath}/images/leaderboard-button.png`,
-                menuButton: `${basePath}/images/menu-button.png`,
-                resumeGameButton: `${basePath}/images/resume-game-button.png`,
-                restartGameButton: `${basePath}/images/restart-game-button.png`,
-                backToMenuButton: `${basePath}/images/back-to-menu-button.png`,
-                randomPrizeButton: `${basePath}/images/random-prize-btn.png`,
-                coomingSoonButton: `${basePath}/images/coming-soon-button.png`,
-                okButton: `${basePath}/images/ok-button.png`,
-                finishedButton: `${basePath}/images/finished-button.png`,
-
-                // Dialog titles
-                gameOverTitle: `${basePath}/images/game-over-title.png`,
-                gamePausedTitle: `${basePath}/images/game-paused-title.png`,
-                instructionsTitle: `${basePath}/images/instructions-title.png`,
-
-                // Game elements
-                itemHighlightBorder: `${basePath}/images/item-highlight-border.png`,
-                itemHighlightStar: `${basePath}/images/item-highlight-star.png`,
-                gamePoints: `${basePath}/images/game-points.png`,
-                instructionsAnimation: `${basePath}/images/instructions-animation.gif`,
-                instructionsTimeBar: `${basePath}/images/instructions-time-bar.png`,
-                instructionsGiftNumSample: `${basePath}/images/instructions-gift-num-sample.png`,
-                
-                checkInDialogCheckInBox: {
-                day1:  `${basePath}/images/check-in-box-day-1.png`,
-                day2:  `${basePath}/images/check-in-box-day-2.png`,
-                day3:  `${basePath}/images/check-in-box-day-3.png`,
-                },
-
-                checkInDialogCheckInTopBanner: {
-                day1:  `${basePath}/images/check-in-box-day-1-top-banner.png`,
-                day2:  `${basePath}/images/check-in-box-day-2-top-banner.png`,
-                day3:  `${basePath}/images/check-in-box-day-3-top-banner.png`,
-                },
-
-                giftBoxIcon: `${basePath}/images/xmas-giftbox.png`,
-
-                gameBottomGiftNumBar: `${basePath}/images/game-bottom-gift-num-bar.png`,
-
-                endDialogGiftBoxBg: `${basePath}/images/end-dialog-gift-box-bg.png`,
-
-                landingBackgroundBottom: `${basePath}/images/game-bg-bottom.png`,
+                // Feed game
+                feedGameBackground: `${basePath}/images/feed_game_bg.png`,
+                feedGamePumpkin: `${basePath}/images/feed_game_pumpkin.png`,
+                feedGameBroccoli: `${basePath}/images/feed_game_broccoli.png`,
+                feedGameEgg: `${basePath}/images/feed_game_egg.png`,
+                feedGameSalmon: `${basePath}/images/feed_game_salmon.png`,
+                feedGameDogKibble: `${basePath}/images/feed_game_dog_kibble.png`,
+                feedGameRice: `${basePath}/images/feed_game_rice.png`,
+                feedGameOptionBox: `${basePath}/images/feed_game_option_box.png`,
+                feedGameOptionBoxCorrect: `${basePath}/images/feed_game_option_box_correct.png`,
+                feedGameOptionBoxWrong: `${basePath}/images/feed_game_option_box_wrong.png`,
+                feedGameMsgBox: `${basePath}/images/feed_game_msg_box.png`,
+                feedGameFailText: `${basePath}/images/feed_game_fail_text.png`,
+                feedGameHeartBox: `${basePath}/images/feed_game_heart_box.png`,
+                feedGameHeart: `${basePath}/images/feed_game_heart.png`,
+                feedGamePointBox: `${basePath}/images/feed_game_point_box.png`,
+                feedGameTimerBox: `${basePath}/images/feed_game_timer_box.png`,
+                feedGameTimeUpText: `${basePath}/images/feed_game_tiemup_text.png`,
+                feedGameThinkingBubble: `${basePath}/images/feed_game_thinking_bubble.png`,
+                feedGameTimeoutDog: `${basePath}/images/feed_game_timeout_dog.png`,
+                feedGameFinishDog: `${basePath}/images/feed_game_finish_dog.png`,
+                feedGameBeginDog: `${basePath}/images/feed_game_begin_dog.png`,
+                feedGamePlus10Text: `${basePath}/images/feed_game_plus_10_text.png`,
             },
         },
     },

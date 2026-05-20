@@ -1,9 +1,7 @@
-import { useSearchParams } from 'next/navigation';
-import { gameConfig } from "@config/gameConfig";
+import { gameConfig } from "@/config/gameConfig";
 
 export const useLanguage = () => {
-  const searchParams = useSearchParams();
-  const lang = searchParams.get('lang') || 'eng';
+  const lang = localStorage.getItem('lang') || 'eng';
   return lang;
 };
 

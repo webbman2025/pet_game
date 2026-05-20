@@ -1,26 +1,24 @@
 "use client";
 
-import { Box } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import Home from "@pages/Home";
-import FeedGame from "@pages/FeedGame";
-import WalkGame from "@pages/WalkGame";
-import SpaGame from "@pages/SpaGame";
+import Home from "@/pages/Home";
+import FeedGame from "@/pages/FeedGame";
+import WalkGame from "@/pages/WalkGame";
+import SpaGame from "@/pages/SpaGame";
 
-import { GameState } from "@components/GameState";
-import { gameConfig } from "@config/gameConfig";
-import { useRouter } from "next/navigation";
-import { useLanguage, getLangAssets } from "@hooks/useLanguage";
+import { GameState } from "@/components/GameState";
+import { gameConfig } from "@/config/gameConfig";
+import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
+import "@/styles/global.scss";
 
 export default function App() {
   const lang = useLanguage();
   const assets = getLangAssets(lang);
 
   // Configuration - now imported from centralized config
-  const { items, comboPopups: comboPopupImages } = assets;
   const { sounds } = gameConfig;
-  const [page, setPage] = useState<"home" | "feedGame" | "walkGame" | "spaGame" | "result">("home");
+  const [page, setPage] = useState<"home" | "feedGame" | "walkGame" | "spaGame">("home");
   const [audioOn, setAudioOn] = useState(true);
   const [isFirstEntry, setIsFirstEntry] = useState(false);
 
@@ -30,14 +28,14 @@ export default function App() {
     petName: "",
     game1Complete: false,
     game1PlayTimes: 0,
-    game1Timer: 0,
+    game1Timer: 10000000,
     game2Complete: false,
     game2PlayTimes: 0,
-    game2Timer: 0,
+    game2Timer: 10000000,
     game3Complete: false,
     game3PlayTimes: 0,
     game3Timer: 0,
-    poopCount: 0
+    poopCount: 2
   });
 
 
@@ -406,16 +404,47 @@ export default function App() {
         });
       } else {
         console.warn("API returned non-success code:", response.data);
-        window.location.reload(); // Reload page if API fails
+        //window.location.reload(); // Reload page if API fails
       }
     } catch (error) {
-      console.error("Error fetching highest score:", error);
+      console.error("Error fetching Game State:", error);
     }
+  };
+
+  const acquirePoint = async (name: string, point: number, satifaction: number) => {
+    try {
+      const response = await axios.get(
+        "/3Care/GamifyPetGameAcquirePoint.do",
+        {
+          params: {
+            campaignID: gameConfig.campaignID,
+            name: name,
+            point: point,
+            satifaction: satifaction
+          },
+        }
+      );
+      if (response.data && response.data.code === 200) {
+        setGameState({ ...gameState, point: response.data.totalPoint, satisfaction: response.data.satisfaction });
+
+        return true;
+      } else {
+        console.warn("API returned non-success code:", response.data);
+        //window.location.reload(); // Reload page if API fails
+      }
+    } catch (error) {
+      console.error("Error acquirePoint:", error);
+    }
+    return false;
   };
 
   useEffect(() => {
     fetchGameState();
   }, []);
+
+  useEffect(() => {
+    fetchGameState();
+  }, [page]);
 
   const handleFeedGame = () => {
     setPage("feedGame");
@@ -433,10 +462,8 @@ export default function App() {
     setPage("home");
   };
 
-  const router = useRouter();
-
   return (
-    <Box id="root">
+    <div id="root">
       {page === "home" && (
         <Home
           audioOn={audioOn} 
@@ -445,6 +472,7 @@ export default function App() {
           onWalk={handleWalkGame}
           onSpa={handleSpaGame}
           gameState={gameState}
+          setGameState={setGameState}
           isFirstEntry={isFirstEntry}
         />
       )}
@@ -454,6 +482,7 @@ export default function App() {
           audioOn={audioOn}
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}
+          acquirePoint={acquirePoint}
         />
       )}
       {page === "walkGame" && (
@@ -462,6 +491,7 @@ export default function App() {
           audioOn={audioOn}
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}
+          acquirePoint={acquirePoint}
         />
       )}
       {page === "spaGame" && (
@@ -470,8 +500,9 @@ export default function App() {
           audioOn={audioOn}
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}
+          acquirePoint={acquirePoint}
         />
       )}
-    </Box>
+    </div>
   );
 }
