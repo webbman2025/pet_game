@@ -1,6 +1,6 @@
 .root {
   position: relative;
-  background-image: url('/3Care/chi/gamify/pet-game/images/home_bg.png');
+  background-image: url('/3Care/chi/gamify/pet_game/images/home_bg.png');
   background-size: cover;
   background-position: center;
   display: flex;
@@ -13,6 +13,127 @@
   height: 100%;
   position: absolute;
   z-index: 1;
+}
+
+.modalOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modalWrap {
+    width: min(330px, 90%);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 52px;
+}
+
+.modalDog {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 75px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.modalFrame {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+    z-index: 3;
+}
+
+.modalTop,
+.modalBottom,
+.modalCenter {
+    width: 100%;
+    display: block;
+}
+
+.modalCenter {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.modalCenterWrap {
+    position: relative;
+}
+
+.modalContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.modalTitle {
+    margin: 0 0 20px;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.modalText {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.modalPointText {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    font-size: 36px;
+}
+
+.coinIcon {
+    width: 28px;
+    height: 30px;
+    margin-right: 8px;
+    margin-top: 2px;
+}
+
+.modalBtn {
+    position: relative;
+    margin-top: 20px;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 145px;
+    cursor: pointer;
+}
+
+.modalBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.modalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
 }
 
 // ===== TOP BAR =====
@@ -133,7 +254,7 @@
   height: 24px;
   overflow: hidden;
   padding: 7px 6px;
-  background-image: url('/3Care/chi/gamify/pet-game/images/satisfaction_bar.png');
+  background-image: url('/3Care/chi/gamify/pet_game/images/satisfaction_bar.png');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
@@ -148,7 +269,7 @@
 // ===== PET IMAGE CONTAINER =====
 .petImageContainer {
   display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: center;
   width: 100%;
   margin: 10px 0;
@@ -160,6 +281,12 @@
 
 .petImage {
   max-height: 250px;
+  position: relative;
+  z-index: 2;
+}
+
+.petImageUnhappy {
+  max-height: 120px;
   position: relative;
   z-index: 2;
 }
@@ -220,7 +347,7 @@
   font-family: inherit;
   border: none;
   background-color: transparent;
-  background-image: url('/3Care/chi/gamify/pet-game/images/game_btn.png');
+  background-image: url('/3Care/chi/gamify/pet_game/images/game_btn.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

@@ -31,6 +31,8 @@ interface HomeProps {
   onSpa: () => void;
   gameState: GameState;
   setGameState: (gameState: GameState) => void;
+  changeName: (name: string) => Promise<boolean>;
+  acquirePoint: (gameName: string, point: number, satisfaction: number) => Promise<boolean>;
   isFirstEntry: boolean;
 }
 
@@ -42,14 +44,15 @@ const Home: React.FC<HomeProps> = ({
   onSpa,
   gameState,
   setGameState,
+  changeName,
+  acquirePoint,
   isFirstEntry
 }) => {
   const lang = useLanguage();
   const assets = getLangAssets(lang);
   
   const [isEditingName, setIsEditingName] = useState(false);
-  const [petName, setPetName] = useState(gameState.petName);
-  const [tempName, setTempName] = useState(petName);
+  const [tempName, setTempName] = useState(gameState.petName);
   const [poopPositions, setPoopPositions] = useState<PoopPosition[]>([]);
   const [isFeedDisabled, setIsFeedDisabled] = useState(false);
   const [isWalkDisabled, setIsWalkDisabled] = useState(false);
@@ -57,7 +60,9 @@ const Home: React.FC<HomeProps> = ({
   const [feedCooldownLabel, setFeedCooldownLabel] = useState("");
   const [walkCooldownLabel, setWalkCooldownLabel] = useState("");
   const [spaCooldownLabel, setSpaCooldownLabel] = useState("");
+  const [showEndModal, setShowEndModal] = useState(false);
   const poopCountRef = useRef(gameState.poopCount);
+  const gameStateRef = useRef(gameState);
   const petImageContainerRef = useRef<HTMLDivElement | null>(null);
   const petImageRef = useRef<HTMLImageElement | null>(null);
   const lastResumeTimeRef = useRef<number>(Date.now());
@@ -66,9 +71,13 @@ const Home: React.FC<HomeProps> = ({
     poopCountRef.current = gameState.poopCount;
   }, [gameState.poopCount]);
 
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
   const handlePetNameClick = () => {
     setIsEditingName(true);
-    setTempName(petName);
+    setTempName(gameStateRef.current.petName);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,7 +86,7 @@ const Home: React.FC<HomeProps> = ({
 
   const handleNameBlur = () => {
     if (tempName.trim()) {
-      setPetName(tempName.trim());
+      setGameState({ ...gameStateRef.current, petName: tempName.trim() });
     }
     setIsEditingName(false);
   };
@@ -89,6 +98,12 @@ const Home: React.FC<HomeProps> = ({
       setIsEditingName(false);
     }
   };
+
+  useEffect(() => {
+    if (!isEditingName) {
+      changeName(tempName.trim());
+    }
+  }, [isEditingName]);
 
   const FEED_MAX_PLAYS = 3;
   const WALK_MAX_PLAYS = 2;
@@ -110,7 +125,7 @@ const Home: React.FC<HomeProps> = ({
     return Math.max(0, cooldownMs - lastPlayedTimestamp);
   };
 
-  const POOP_ICON_SIZE = 40;
+  const POOP_ICON_SIZE = 15;
 
   const rectsOverlap = (
     a: { left: number; bottom: number; width: number; height: number },
@@ -143,8 +158,7 @@ const Home: React.FC<HomeProps> = ({
       height: petRect.height,
     };
 
-    const maxLeft = Math.max(0, containerRect.width - POOP_ICON_SIZE);
-    const maxBottom = Math.max(0, containerRect.height/5);
+    const maxLeft = Math.max(0, containerRect.width - POOP_ICON_SIZE - 30);
 
     setPoopPositions((prev) => {
       const currentCount = prev.length;
@@ -161,13 +175,15 @@ const Home: React.FC<HomeProps> = ({
       const newPositions: PoopPosition[] = [];
       const needed = targetCount - currentCount;
 
+      let regenerateCount = 0;
+
       while (newPositions.length < needed) {
         const candidate: PoopPosition = {
           ...createPoopPosition(),
           left: Math.random() * maxLeft,
-          bottom: Math.random() * maxBottom,
-          width: Math.random() * POOP_ICON_SIZE + 20,
-          height: Math.random() * POOP_ICON_SIZE + 20,
+          bottom: 0,
+          width: Math.random() * POOP_ICON_SIZE + 30,
+          height: Math.random() * POOP_ICON_SIZE + 30,
         };
 
         const overlapsPet = rectsOverlap(candidate, petBounds);
@@ -176,12 +192,14 @@ const Home: React.FC<HomeProps> = ({
         );
 
         if (!overlapsPet && !overlapsOther) {
-          console.log("petBounds", petBounds);
-          console.log("candidate", candidate);
+          regenerateCount = 0;
           newPositions.push(candidate);
         } else {
-          console.log("overlapsPet error", overlapsPet);
-          console.log("overlapsOther", overlapsOther);
+          regenerateCount++;
+
+          if (regenerateCount > 20 && !overlapsPet) {
+            newPositions.push(candidate);
+          }
         }
       }
 
@@ -202,21 +220,22 @@ const Home: React.FC<HomeProps> = ({
     let timer: NodeJS.Timeout;
 
     timer = setInterval(() => {
+      const latestGameState = gameStateRef.current;
       const now = Date.now();
       const currentSessionTime = now - lastResumeTimeRef.current;
      
       // Task completion status (daily play counts expected from PlayTimes fields)
-      const feedCompletions = Math.min(FEED_MAX_PLAYS, gameState.game1PlayTimes);
-      const walkCompletions = Math.min(WALK_MAX_PLAYS, gameState.game2PlayTimes);
-      const spaCompletions = Math.min(SPA_MAX_PLAYS, gameState.game3PlayTimes);
+      const feedCompletions = Math.min(FEED_MAX_PLAYS, latestGameState.game1PlayTimes);
+      const walkCompletions = Math.min(WALK_MAX_PLAYS, latestGameState.game2PlayTimes);
+      const spaCompletions = Math.min(SPA_MAX_PLAYS, latestGameState.game3PlayTimes);
 
-      const feedCooldownMs = getRemainingCooldown(gameState.game1Timer + currentSessionTime, FEED_COOLDOWN_MS);
-      const walkCooldownMs = getRemainingCooldown(gameState.game2Timer + currentSessionTime, WALK_COOLDOWN_MS);
-      const spaCooldownMs = getRemainingCooldown(gameState.game3Timer + currentSessionTime, 0);
+      const feedCooldownMs = getRemainingCooldown(latestGameState.game1Timer + currentSessionTime, FEED_COOLDOWN_MS);
+      const walkCooldownMs = getRemainingCooldown(latestGameState.game2Timer + currentSessionTime, WALK_COOLDOWN_MS);
+      const spaCooldownMs = getRemainingCooldown(latestGameState.game3Timer + currentSessionTime, 0);
 
-      const nextIsFeedDisabled = feedCompletions >= FEED_MAX_PLAYS || feedCooldownMs > 0;
-      const nextIsWalkDisabled = walkCompletions >= WALK_MAX_PLAYS || walkCooldownMs > 0;
-      const nextIsSpaDisabled = spaCompletions >= SPA_MAX_PLAYS;
+      const nextIsFeedDisabled = latestGameState.game1Timer > 0 && (feedCompletions >= FEED_MAX_PLAYS || feedCooldownMs > 0);
+      const nextIsWalkDisabled = latestGameState.game2Timer > 0 && (walkCompletions >= WALK_MAX_PLAYS || walkCooldownMs > 0);
+      const nextIsSpaDisabled = latestGameState.game3Timer > 0 && (spaCompletions >= SPA_MAX_PLAYS);
 
       setIsFeedDisabled(nextIsFeedDisabled);
       setIsWalkDisabled(nextIsWalkDisabled);
@@ -225,6 +244,7 @@ const Home: React.FC<HomeProps> = ({
       setFeedCooldownLabel(nextIsFeedDisabled && feedCooldownMs > 0 ? formatRemainingTime(feedCooldownMs) : "");
       setWalkCooldownLabel(nextIsWalkDisabled && walkCooldownMs > 0 ? formatRemainingTime(walkCooldownMs) : "");
       setSpaCooldownLabel(nextIsSpaDisabled ? "" : "");
+
     }, 200);
     
     return () => {
@@ -234,6 +254,22 @@ const Home: React.FC<HomeProps> = ({
 
   // Calculate satisfaction bar percentage
   const satisfactionPercentage = Math.max(0, Math.min(100, gameState.satisfaction));
+
+  const petImageSrc = (() => {
+    if (satisfactionPercentage >= 100) {
+      return Math.random() < 0.5 ? assets.ui.petVeryHappyDanceAnim : assets.ui.petVeryHappyAnim;
+    }
+    if (satisfactionPercentage >= 70) {
+      return assets.ui.petHappyAnim;
+    }
+    if (satisfactionPercentage >= 50) {
+      return assets.ui.petNormalAnim;
+    }
+    if (satisfactionPercentage >= 30) {
+      return assets.ui.petBoringAnim;
+    }
+    return assets.ui.petUnhappyAnim;
+  })();
 
   
   // Submit score to API when poop is removed
@@ -252,7 +288,8 @@ const Home: React.FC<HomeProps> = ({
       );
       if (response.data && response.data.code === 200) {
         setPoopPositions((prev) => prev.filter((poop) => poop.id !== poopId));
-        setGameState({ ...gameState, poopCount: Math.max(0, gameState.poopCount - 1) });
+        setGameState({ ...gameState, point: gameState.point + 20, poopCount: Math.max(0, gameState.poopCount - 1) });
+        setShowEndModal(true);
         console.log("Poop removed successfully:", response.data);
       } else {
         console.warn("API returned non-success code:", response.data);
@@ -264,6 +301,38 @@ const Home: React.FC<HomeProps> = ({
 
   return (
     <div className={styles.root}>
+
+      {showEndModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalWrap}>
+
+            <div className={styles.modalFrame}>
+              <img className={styles.modalTop} src={assets.ui.modalTop} alt="Modal Top" />
+
+              <div className={styles.modalCenterWrap}>
+                <img className={styles.modalCenter} src={assets.ui.modalCenter} alt="Modal Center" />
+                <div className={styles.modalContent}>
+                  <p className={styles.modalText}>You earned points</p>
+                  <p className={styles.modalPointText}>
+                    <img src={assets.ui.coinIcon} className={styles.coinIcon}/>
+                    +20
+                  </p>
+                  <p className={styles.modalText}>Total Points</p>
+                  <p className={styles.modalText}>{gameStateRef.current.point}</p>
+
+                  <button className={styles.modalBtn} onClick={() => setShowEndModal(false)} type="button">
+                    <img className={styles.modalBtnBg} src={assets.ui.primaryBtn} alt="OK" />
+                    <span className={styles.modalBtnText}>OK</span>
+                  </button>
+                </div>
+              </div>
+
+              <img className={styles.modalBottom} src={assets.ui.modalButtom} alt="Modal Bottom" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className={styles.topBar}>
         {/* Pet Name - Top Left */}
@@ -284,7 +353,7 @@ const Home: React.FC<HomeProps> = ({
               className={styles.petName}
               onClick={handlePetNameClick}
             >
-              {petName || 'Unnamed Pet'}
+              {gameStateRef.current.petName || 'Unnamed Pet'}
             </span>
           )}
         </div>
@@ -318,9 +387,9 @@ const Home: React.FC<HomeProps> = ({
       <div className={styles.petImageContainer} ref={petImageContainerRef}>
         <img
           ref={petImageRef}
-          src={assets.ui.pet}
+          src={petImageSrc}
           alt="Pet"
-          className={styles.petImage}
+          className={satisfactionPercentage < 30 ? styles.petImageUnhappy : styles.petImage}
         />
 
         {poopPositions.map((position) => (

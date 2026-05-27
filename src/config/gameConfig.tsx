@@ -1,8 +1,8 @@
-const basePath = "/3Care/chi/gamify/pet-game";
+const basePath = "/3Care/chi/gamify/pet_game";
 
 export const gameConfig = {
     basePath,
-    campaignID: "pet-game",
+    campaignID: "pet_game",
 
     sounds: {
         // Background music
@@ -71,6 +71,12 @@ export const gameConfig = {
                 // home screen
                 homeBG: `${basePath}/images/home_bg.png`,
                 pet: `${basePath}/images/pet.png`,
+                petVeryHappyDanceAnim: `${basePath}/images/pet_very_happy_dance_anim.gif`,
+                petVeryHappyAnim: `${basePath}/images/pet_very_happy_anim.gif`,
+                petHappyAnim: `${basePath}/images/pet_happy_anim.gif`,
+                petNormalAnim: `${basePath}/images/pet_normal_anim.gif`,
+                petBoringAnim: `${basePath}/images/pet_boring_anim.gif`,
+                petUnhappyAnim: `${basePath}/images/pet_unhappy_anim.gif`,
                 coinIcon: `${basePath}/images/coin_icon.png`,
                 feedGameIcon: `${basePath}/images/feed_game_icon.png`,
                 walkGameIcon: `${basePath}/images/walk_game_icon.png`,
@@ -122,6 +128,12 @@ export const gameConfig = {
                 // Home screen
                 homeBG: `${basePath}/images/home_bg.png`,
                 pet: `${basePath}/images/pet.png`,
+                petVeryHappyDanceAnim: `${basePath}/images/pet_very_happy_dance_anim.gif`,
+                petVeryHappyAnim: `${basePath}/images/pet_very_happy_anim.gif`,
+                petHappyAnim: `${basePath}/images/pet_happy_anim.gif`,
+                petNormalAnim: `${basePath}/images/pet_normal_anim.gif`,
+                petBoringAnim: `${basePath}/images/pet_boring_anim.gif`,
+                petUnhappyAnim: `${basePath}/images/pet_unhappy_anim.gif`,
                 coinIcon: `${basePath}/images/coin_icon.png`,
                 feedGameIcon: `${basePath}/images/feed_game_icon.png`,
                 walkGameIcon: `${basePath}/images/walk_game_icon.png`,

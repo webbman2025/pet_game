@@ -1,6 +1,6 @@
 .root {
     position: relative;
-    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_bg.png');
+    background-image: url('/3Care/chi/gamify/pet_game/images/feed_game_bg.png');
     background-size: cover;
     background-position: center;
     display: flex;
@@ -91,12 +91,17 @@
 }
 
 .modalPointText {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
     font-size: 36px;
 }
 
 .coinIcon {
     width: 28px;
     height: 30px;
+    margin-right: 8px;
+    margin-top: 2px;
 }
 
 .modalBtn {
@@ -254,7 +259,7 @@
 
 
 .msgBoxContainer {
-    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_msg_box.png');
+    background-image: url('/3Care/chi/gamify/pet_game/images/feed_game_msg_box.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     margin-top: auto;
@@ -274,7 +279,7 @@
 }
 
 .option {
-    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_option_box.png');
+    background-image: url('/3Care/chi/gamify/pet_game/images/feed_game_option_box.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     width: 27%;
@@ -282,11 +287,11 @@
 }
 
 .option.correct {
-    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_option_box_correct.png');
+    background-image: url('/3Care/chi/gamify/pet_game/images/feed_game_option_box_correct.png');
 }
 
 .option.wrong {
-    background-image: url('/3Care/chi/gamify/pet-game/images/feed_game_option_box_wrong.png');
+    background-image: url('/3Care/chi/gamify/pet_game/images/feed_game_option_box_wrong.png');
 }
 
 .optionImg {

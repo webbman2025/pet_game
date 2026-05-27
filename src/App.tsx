@@ -21,6 +21,7 @@ export default function App() {
   const [page, setPage] = useState<"home" | "feedGame" | "walkGame" | "spaGame">("home");
   const [audioOn, setAudioOn] = useState(true);
   const [isFirstEntry, setIsFirstEntry] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [gameState, setGameState] = useState<GameState>({
     point: 0,
@@ -28,10 +29,10 @@ export default function App() {
     petName: "",
     game1Complete: false,
     game1PlayTimes: 0,
-    game1Timer: 10000000,
+    game1Timer: 0,
     game2Complete: false,
     game2PlayTimes: 0,
-    game2Timer: 10000000,
+    game2Timer: 0,
     game3Complete: false,
     game3PlayTimes: 0,
     game3Timer: 0,
@@ -376,6 +377,7 @@ export default function App() {
 
   // Fetch user's highest score from API on component mount
   const fetchGameState = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get(
         "/3Care/GamifyPetGameState.do",
@@ -408,19 +410,21 @@ export default function App() {
       }
     } catch (error) {
       console.error("Error fetching Game State:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const acquirePoint = async (name: string, point: number, satifaction: number) => {
+  const acquirePoint = async (gameName: string, point: number, satisfaction: number) => {
     try {
       const response = await axios.get(
         "/3Care/GamifyPetGameAcquirePoint.do",
         {
           params: {
             campaignID: gameConfig.campaignID,
-            name: name,
+            name: gameName,
             point: point,
-            satifaction: satifaction
+            satisfaction: satisfaction
           },
         }
       );
@@ -434,6 +438,30 @@ export default function App() {
       }
     } catch (error) {
       console.error("Error acquirePoint:", error);
+    }
+    return false;
+  };
+
+  const changeName = async (name: string) => {
+    try {
+      const response = await axios.get(
+        "/3Care/GamifyChangeConfig.do",
+        {
+          params: {
+            campaignID: gameConfig.campaignID,
+            type: "name",
+            value: name
+          },
+        }
+      );
+      if (response.data && response.data.code === 200) {
+        return true;
+      } else {
+        console.warn("API returned non-success code:", response.data);
+        //window.location.reload(); // Reload page if API fails
+      }
+    } catch (error) {
+      console.error("Error changeName:", error);
     }
     return false;
   };
@@ -462,6 +490,14 @@ export default function App() {
     setPage("home");
   };
 
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
+
   return (
     <div id="root">
       {page === "home" && (
@@ -473,6 +509,8 @@ export default function App() {
           onSpa={handleSpaGame}
           gameState={gameState}
           setGameState={setGameState}
+          changeName={changeName}
+          acquirePoint={acquirePoint}
           isFirstEntry={isFirstEntry}
         />
       )}

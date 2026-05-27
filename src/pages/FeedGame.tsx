@@ -10,7 +10,7 @@ interface FeedGameProps {
   setAudioOn: (audioOn: boolean) => void;
   gameState: GameState;
   onBackToMenu: () => void;
-  acquirePoint: (name: string, point: number, satifaction: number) => void;
+  acquirePoint: (name: string, point: number, satisfaction: number) => void;
 }
 
 const FeedGame: React.FC<FeedGameProps> = ({

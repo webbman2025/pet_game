@@ -4,7 +4,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/3Care/chi/gamify/pet-game/',
+  base: '/3Care/chi/gamify/pet_game/',
   plugins: [react()],
   resolve: {
     alias: {
