@@ -1,73 +1,126 @@
-# React + TypeScript + Vite
+# Pet Game - Build and Handover Guide
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a React + TypeScript app built with Vite.
 
-Currently, two official plugins are available:
+Use this guide to set up, run, and build the project on a new machine.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 1. Prerequisites
 
-## React Compiler
+Install the following first:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Node.js 20 LTS (recommended)
+2. npm (comes with Node.js)
+3. Git
 
-## Expanding the ESLint configuration
+Verify installation:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+node -v
+npm -v
+git --version
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 2. Clone and Open the Project
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone <your-repo-url>
+cd pet_game
 ```
+
+Or, if you already have the project folder, open it directly in VS Code.
+
+## 3. Install Dependencies
+
+Install packages from package-lock.json:
+
+```bash
+npm ci
+```
+
+If package-lock.json is missing in another clone, use:
+
+```bash
+npm install
+```
+
+## 4. Run in Development Mode
+
+```bash
+npm run dev
+```
+
+Vite will print the local URL (usually http://localhost:5173).
+
+## 5. Build for Production
+
+```bash
+npm run build
+```
+
+What this does:
+
+1. Runs TypeScript project build (`tsc -b`)
+2. Runs Vite production build (`vite build`)
+3. Outputs final static files to the dist folder
+
+## 6. Preview Production Build Locally
+
+```bash
+npm run preview
+```
+
+This serves the dist output so you can test the same assets that will be deployed.
+
+## 7. Lint Check
+
+```bash
+npm run lint
+```
+
+Run this before handoff, PR, or deployment.
+
+## 8. Important Deployment Note (Base Path)
+
+In vite.config.ts, the app base path is currently:
+
+`/3Care/chi/gamify/pet_game/`
+
+That means build assets are generated for hosting under this subpath.
+
+If deploying to a different path (or root `/`), update `base` in vite.config.ts before running `npm run build`.
+
+Example for root deployment:
+
+```ts
+base: '/'
+```
+
+## 9. Common Troubleshooting
+
+1. Build fails after switching Node versions
+   - Delete node_modules and reinstall:
+   - `rm -rf node_modules package-lock.json` (macOS/Linux)
+   - `rmdir /s /q node_modules && del package-lock.json` (Windows cmd)
+   - Then run `npm install`
+2. Port 5173 already in use
+   - Vite usually offers another port automatically
+   - Or run with a custom port: `npm run dev -- --port 5174`
+3. Old assets shown in browser
+   - Hard refresh (Ctrl+F5) or clear cache
+
+## 10. Handover Checklist
+
+Before handing over to teammate:
+
+1. Confirm `npm ci` works from a clean clone
+2. Confirm `npm run dev` starts without errors
+3. Confirm `npm run build` succeeds
+4. Confirm `npm run preview` loads correctly
+5. Confirm base path in vite.config.ts matches target hosting path
+
+## Project Scripts
+
+- `npm run dev` - start Vite development server
+- `npm run build` - TypeScript build + Vite production build
+- `npm run preview` - preview built app from dist
+- `npm run lint` - run ESLint
