@@ -36,7 +36,7 @@ export default function App() {
     game3Complete: false,
     game3PlayTimes: 0,
     game3Timer: 0,
-    poopCount: 2
+    poopCount: 0
   });
 
 
