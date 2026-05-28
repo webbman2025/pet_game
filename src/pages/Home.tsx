@@ -88,6 +88,7 @@ const Home: React.FC<HomeProps> = ({
     if (tempName.trim()) {
       setGameState({ ...gameStateRef.current, petName: tempName.trim() });
     }
+    changeName(tempName.trim());
     setIsEditingName(false);
   };
 
@@ -95,15 +96,10 @@ const Home: React.FC<HomeProps> = ({
     if (e.key === 'Enter') {
       handleNameBlur();
     } else if (e.key === 'Escape') {
+      changeName(tempName.trim());
       setIsEditingName(false);
     }
   };
-
-  useEffect(() => {
-    if (!isEditingName) {
-      changeName(tempName.trim());
-    }
-  }, [isEditingName]);
 
   const FEED_MAX_PLAYS = 3;
   const WALK_MAX_PLAYS = 2;
@@ -241,8 +237,8 @@ const Home: React.FC<HomeProps> = ({
       setIsWalkDisabled(nextIsWalkDisabled);
       setIsSpaDisabled(nextIsSpaDisabled);
 
-      setFeedCooldownLabel(nextIsFeedDisabled && feedCooldownMs > 0 ? formatRemainingTime(feedCooldownMs) : "");
-      setWalkCooldownLabel(nextIsWalkDisabled && walkCooldownMs > 0 ? formatRemainingTime(walkCooldownMs) : "");
+      setFeedCooldownLabel(nextIsFeedDisabled && feedCooldownMs > 0 && feedCompletions < FEED_MAX_PLAYS ? formatRemainingTime(feedCooldownMs) : "");
+      setWalkCooldownLabel(nextIsWalkDisabled && walkCooldownMs > 0 && walkCompletions < WALK_MAX_PLAYS ? formatRemainingTime(walkCooldownMs) : "");
       setSpaCooldownLabel(nextIsSpaDisabled ? "" : "");
 
     }, 200);
@@ -353,7 +349,7 @@ const Home: React.FC<HomeProps> = ({
               className={styles.petName}
               onClick={handlePetNameClick}
             >
-              {gameStateRef.current.petName || 'Unnamed Pet'}
+              {gameState.petName || 'Unnamed Pet'}
             </span>
           )}
         </div>
