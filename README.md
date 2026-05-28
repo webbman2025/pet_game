@@ -12,6 +12,17 @@ Install the following first:
 2. npm (comes with Node.js)
 3. Git
 
+### Install Node.js and npm
+
+If Node.js and npm are not installed yet:
+
+1. Go to https://nodejs.org
+2. Download and install the **Node.js 20 LTS** version
+3. Keep default installer options (npm is included automatically)
+4. Re-open terminal after installation
+
+Alternative (macOS/Linux): install Node.js 20 LTS using a version manager such as nvm.
+
 Verify installation:
 
 ```bash
