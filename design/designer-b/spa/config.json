@@ -1,0 +1,11 @@
+{
+  "name": "Spa Game",
+  "durationSeconds": 30,
+  "maxHearts": 3,
+  "pointsPerAction": 10,
+  "copy": {
+    "start": "Give your pet a spa day!",
+    "win": "So relaxed!",
+    "timeUp": "Time's up!"
+  }
+}

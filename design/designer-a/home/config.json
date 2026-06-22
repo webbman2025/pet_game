@@ -1,0 +1,19 @@
+{
+  "name": "Home",
+  "copy": {
+    "satisfactionLabel": "Satisfaction level",
+    "dailyTaskTitle": "Daily Task",
+    "feedTask": "Feed 3 times",
+    "walkTask": "Walk 2 times",
+    "spaTask": "Spa 1 time"
+  },
+  "cooldowns": {
+    "feedHours": 2,
+    "walkMinutes": 30
+  },
+  "dailyLimits": {
+    "feed": 3,
+    "walk": 2,
+    "spa": 1
+  }
+}

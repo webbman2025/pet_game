@@ -1,0 +1,12 @@
+{
+  "name": "Feed Game",
+  "durationSeconds": 30,
+  "maxHearts": 3,
+  "pointsPerCorrect": 10,
+  "copy": {
+    "start": "Feed your pet the right food!",
+    "win": "Well fed!",
+    "fail": "Try again!",
+    "timeUp": "Time's up!"
+  }
+}

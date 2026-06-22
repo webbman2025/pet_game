@@ -1,9 +1,10 @@
 import styles from "@/styles/Home.module.scss";
 import { gameConfig } from "@/config/gameConfig";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatNumberWithCommas } from "@/utils/index";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import { GameState } from "@/components/GameState";
+import { CanvasGifPlayer } from "@/components/CanvasGifPlayer";
 import axios from "axios";
 
 interface PoopPosition {
@@ -64,7 +65,7 @@ const Home: React.FC<HomeProps> = ({
   const poopCountRef = useRef(gameState.poopCount);
   const gameStateRef = useRef(gameState);
   const petImageContainerRef = useRef<HTMLDivElement | null>(null);
-  const petImageRef = useRef<HTMLImageElement | null>(null);
+  const petImageRef = useRef<HTMLDivElement | null>(null);
   const lastResumeTimeRef = useRef<number>(Date.now());
 
   useEffect(() => {
@@ -138,8 +139,14 @@ const Home: React.FC<HomeProps> = ({
     );
   };
 
-  const generatePoopPositions = () => {
+  const generatePoopPositions = useCallback(() => {
     if (!petImageContainerRef.current || !petImageRef.current) {
+      setPoopPositions([]);
+      return;
+    }
+
+    const targetCount = Math.max(0, poopCountRef.current);
+    if (targetCount === 0) {
       setPoopPositions([]);
       return;
     }
@@ -158,7 +165,6 @@ const Home: React.FC<HomeProps> = ({
 
     setPoopPositions((prev) => {
       const currentCount = prev.length;
-      const targetCount = Math.max(0, poopCountRef.current);
 
       if (targetCount === currentCount) {
         return prev;
@@ -201,16 +207,11 @@ const Home: React.FC<HomeProps> = ({
 
       return [...prev, ...newPositions];
     });
-  };
+  }, []);
 
   useEffect(() => {
     generatePoopPositions();
-    const resizeObserver = new ResizeObserver(() => generatePoopPositions());
-    if (petImageContainerRef.current) resizeObserver.observe(petImageContainerRef.current);
-    if (petImageRef.current) resizeObserver.observe(petImageRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, [gameState.poopCount, assets.ui.poop]);
+  }, [gameState.poopCount, assets.ui.poop, generatePoopPositions]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -233,13 +234,23 @@ const Home: React.FC<HomeProps> = ({
       const nextIsWalkDisabled = latestGameState.game2Timer > 0 && (walkCompletions >= WALK_MAX_PLAYS || walkCooldownMs > 0);
       const nextIsSpaDisabled = latestGameState.game3Timer > 0 && (spaCompletions >= SPA_MAX_PLAYS);
 
-      setIsFeedDisabled(nextIsFeedDisabled);
-      setIsWalkDisabled(nextIsWalkDisabled);
-      setIsSpaDisabled(nextIsSpaDisabled);
+      setIsFeedDisabled((prev) => (prev === nextIsFeedDisabled ? prev : nextIsFeedDisabled));
+      setIsWalkDisabled((prev) => (prev === nextIsWalkDisabled ? prev : nextIsWalkDisabled));
+      setIsSpaDisabled((prev) => (prev === nextIsSpaDisabled ? prev : nextIsSpaDisabled));
 
-      setFeedCooldownLabel(nextIsFeedDisabled && feedCooldownMs > 0 && feedCompletions < FEED_MAX_PLAYS ? formatRemainingTime(feedCooldownMs) : "");
-      setWalkCooldownLabel(nextIsWalkDisabled && walkCooldownMs > 0 && walkCompletions < WALK_MAX_PLAYS ? formatRemainingTime(walkCooldownMs) : "");
-      setSpaCooldownLabel(nextIsSpaDisabled ? "" : "");
+      const nextFeedCooldownLabel =
+        nextIsFeedDisabled && feedCooldownMs > 0 && feedCompletions < FEED_MAX_PLAYS
+          ? formatRemainingTime(feedCooldownMs)
+          : "";
+      const nextWalkCooldownLabel =
+        nextIsWalkDisabled && walkCooldownMs > 0 && walkCompletions < WALK_MAX_PLAYS
+          ? formatRemainingTime(walkCooldownMs)
+          : "";
+      const nextSpaCooldownLabel = nextIsSpaDisabled ? "" : "";
+
+      setFeedCooldownLabel((prev) => (prev === nextFeedCooldownLabel ? prev : nextFeedCooldownLabel));
+      setWalkCooldownLabel((prev) => (prev === nextWalkCooldownLabel ? prev : nextWalkCooldownLabel));
+      setSpaCooldownLabel((prev) => (prev === nextSpaCooldownLabel ? prev : nextSpaCooldownLabel));
 
     }, 200);
     
@@ -251,21 +262,42 @@ const Home: React.FC<HomeProps> = ({
   // Calculate satisfaction bar percentage
   const satisfactionPercentage = Math.max(0, Math.min(100, gameState.satisfaction));
 
-  const petImageSrc = (() => {
-    if (satisfactionPercentage >= 100) {
+  const resolvePetImageSrc = (satisfaction: number, previousSrc?: string) => {
+    if (satisfaction >= 100) {
+      const veryHappyImages = [assets.ui.petVeryHappyDanceAnim, assets.ui.petVeryHappyAnim];
+
+      if (previousSrc && veryHappyImages.includes(previousSrc)) {
+        return previousSrc;
+      }
+
       return Math.random() < 0.5 ? assets.ui.petVeryHappyDanceAnim : assets.ui.petVeryHappyAnim;
     }
-    if (satisfactionPercentage >= 70) {
+
+    if (satisfaction >= 70) {
       return assets.ui.petHappyAnim;
     }
-    if (satisfactionPercentage >= 50) {
+    if (satisfaction >= 50) {
       return assets.ui.petNormalAnim;
     }
-    if (satisfactionPercentage >= 30) {
+    if (satisfaction >= 30) {
       return assets.ui.petBoringAnim;
     }
     return assets.ui.petUnhappyAnim;
-  })();
+  };
+
+  const [petImageSrc, setPetImageSrc] = useState(() => resolvePetImageSrc(satisfactionPercentage));
+
+  useEffect(() => {
+    setPetImageSrc((previousSrc) => resolvePetImageSrc(satisfactionPercentage, previousSrc));
+  }, [
+    satisfactionPercentage,
+    assets.ui.petVeryHappyDanceAnim,
+    assets.ui.petVeryHappyAnim,
+    assets.ui.petHappyAnim,
+    assets.ui.petNormalAnim,
+    assets.ui.petBoringAnim,
+    assets.ui.petUnhappyAnim,
+  ]);
 
   
   // Submit score to API when poop is removed
@@ -381,11 +413,12 @@ const Home: React.FC<HomeProps> = ({
 
       {/* Pet Image - Center */}
       <div className={styles.petImageContainer} ref={petImageContainerRef}>
-        <img
-          ref={petImageRef}
+        <CanvasGifPlayer
+          wrapperRef={petImageRef}
           src={petImageSrc}
           alt="Pet"
           className={satisfactionPercentage < 30 ? styles.petImageUnhappy : styles.petImage}
+          onLoad={generatePoopPositions}
         />
 
         {poopPositions.map((position) => (

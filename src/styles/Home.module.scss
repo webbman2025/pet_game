@@ -277,18 +277,29 @@
   z-index: 2;
   flex: 5;
   min-height: 280px;
+
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
 }
 
 .petImage {
   max-height: 250px;
   position: relative;
   z-index: 2;
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .petImageUnhappy {
   max-height: 120px;
   position: relative;
   z-index: 2;
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .poopMarker {
