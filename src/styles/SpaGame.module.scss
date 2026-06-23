@@ -1,0 +1,751 @@
+.root {
+    position: relative;
+    background-image: url('/3Care/chi/gamify/pet_game/images/spa_game_bg.png');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.bgImage {
+    display: none;
+}
+
+.topOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 16%;
+    background: linear-gradient(180deg, rgba(234, 213, 194, 0.5) 0%, rgba(234, 213, 194, 0) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.tutorialOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+}
+
+.tutorialModal {
+    position: relative;
+    width: min(352px, 90%);
+}
+
+.tutorialFrame {
+    width: 100%;
+    display: block;
+}
+
+.tutorialContent {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 72px 36px 56px;
+}
+
+.tutorialTitle {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+
+.tutorialText {
+    margin: 0;
+    font-size: 16px;
+    line-height: normal;
+    text-align: center;
+}
+
+.tutorialPreview {
+    width: 244px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.tutorialBtn {
+    position: relative;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 145px;
+    cursor: pointer;
+}
+
+.tutorialBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.tutorialBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.timeUpOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 35%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 8;
+    pointer-events: none;
+}
+
+.finishOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 42%;
+    background: linear-gradient(180deg, rgba(234, 187, 0, 0.5) 0%, rgba(234, 187, 0, 0) 100%);
+    z-index: 8;
+    pointer-events: none;
+}
+
+.timeUpTitle {
+    position: absolute;
+    top: 26%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    width: 90%;
+    font-size: clamp(32px, 12vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    text-align: center;
+    z-index: 9;
+    pointer-events: none;
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    text-shadow:
+        2px 0 0 #000,
+        -2px 0 0 #000,
+        0 2px 0 #000,
+        0 -2px 0 #000,
+        1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000;
+}
+
+.finishTitle {
+    position: absolute;
+    top: 24%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    width: 90%;
+    font-size: clamp(32px, 12vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    text-shadow:
+        2px 0 0 #000,
+        -2px 0 0 #000,
+        0 2px 0 #000,
+        0 -2px 0 #000,
+        1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        0 2px 10px rgba(255, 255, 255, 0.8);
+}
+
+.finishBling1 {
+    position: absolute;
+    left: 24%;
+    top: 18%;
+    width: 32px;
+    z-index: 10;
+    pointer-events: none;
+    animation: blingTwinkle 1.8s ease-in-out infinite;
+}
+
+.finishBling2 {
+    position: absolute;
+    right: 12%;
+    top: 19%;
+    width: 32px;
+    z-index: 10;
+    pointer-events: none;
+    animation: blingTwinkleFlip 2.1s ease-in-out infinite 0.3s;
+}
+
+.finishBling3 {
+    position: absolute;
+    left: 70%;
+    top: 19%;
+    width: 14px;
+    z-index: 10;
+    pointer-events: none;
+    animation: blingTwinkle 1.6s ease-in-out infinite 0.5s;
+}
+
+.finishBling4 {
+    position: absolute;
+    left: 26%;
+    top: 32%;
+    width: 14px;
+    z-index: 10;
+    pointer-events: none;
+    animation: blingTwinkle 2s ease-in-out infinite 0.2s;
+}
+
+.finishBling5 {
+    position: absolute;
+    left: 68%;
+    top: 28%;
+    width: 14px;
+    z-index: 10;
+    pointer-events: none;
+    animation: blingTwinkle 1.7s ease-in-out infinite 0.7s;
+}
+
+.finishBling6 {
+    position: absolute;
+    right: 22%;
+    top: 28%;
+    width: 25px;
+    z-index: 10;
+    pointer-events: none;
+    animation: blingTwinkle 2.2s ease-in-out infinite 0.4s;
+}
+
+.pointsModalOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+}
+
+.pointsModalWrap {
+    position: relative;
+    width: min(330px, 90%);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 52px;
+}
+
+.pointsModalDog {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 128px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.pointsModalFrame {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+}
+
+.pointsModalContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.pointsModalTitle,
+.pointsModalTotalLabel {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.pointsModalEarned {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.pointsCoinIcon {
+    width: 28px;
+    height: 30px;
+}
+
+.pointsModalTotal {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.pointsModalBtn {
+    position: relative;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 145px;
+    cursor: pointer;
+}
+
+.pointsModalBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.pointsModalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.modalOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modalWrap {
+    width: min(330px, 90%);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 52px;
+}
+
+.modalDog {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 75px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.modalFrame {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+    z-index: 3;
+}
+
+.modalTop,
+.modalBottom,
+.modalCenter {
+    width: 100%;
+    display: block;
+}
+
+.modalCenter {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.modalCenterWrap {
+    position: relative;
+}
+
+.modalContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.modalTitle {
+    margin: 0 0 20px;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.modalText {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.modalPointText {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    font-size: 36px;
+}
+
+.coinIcon {
+    width: 28px;
+    height: 30px;
+    margin-right: 8px;
+    margin-top: 2px;
+}
+
+.modalBtn {
+    position: relative;
+    margin-top: 20px;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 145px;
+    cursor: pointer;
+}
+
+.modalBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.modalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.gameTopBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    z-index: 3;
+    padding: 10px;
+}
+
+.timerContainer {
+    position: relative;
+    height: 40px;
+    width: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.timerBox {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.timerText {
+    position: relative;
+    z-index: 2;
+    font-size: 20px;
+    color: #fff;
+    margin-top: 2px;
+    margin-right: 10px;
+}
+
+.pointContainer {
+    position: relative;
+    height: 27px;
+    width: 71px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.pointBox {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.pointText {
+    position: relative;
+    z-index: 2;
+    font-size: 20px;
+    color: #fff;
+    margin-right: 10px;
+}
+
+.gameArea {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    z-index: 2;
+}
+
+.petScene {
+    position: absolute;
+    left: 50%;
+    top: 48%;
+    transform: translate(-50%, -50%);
+    width: min(76%, 299px);
+    height: min(38vh, 320px);
+}
+
+.dogImage {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 100%;
+    max-width: 299px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.petBlingA {
+    position: absolute;
+    left: 8%;
+    top: 2%;
+    width: 11%;
+    max-width: 32px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 1.9s ease-in-out infinite;
+}
+
+.petBlingB {
+    position: absolute;
+    right: 14%;
+    bottom: 8%;
+    width: 11%;
+    max-width: 32px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 2s ease-in-out infinite 0.4s;
+}
+
+.petBlingC {
+    position: absolute;
+    right: 18%;
+    top: 18%;
+    width: 8%;
+    max-width: 25px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 1.7s ease-in-out infinite 0.2s;
+}
+
+.petBlingD {
+    position: absolute;
+    left: 2%;
+    bottom: 18%;
+    width: 8%;
+    max-width: 25px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 2.1s ease-in-out infinite 0.6s;
+}
+
+.petBlingE {
+    position: absolute;
+    left: 44%;
+    top: 2%;
+    width: 5%;
+    max-width: 14px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 1.5s ease-in-out infinite 0.3s;
+}
+
+.petBlingF {
+    position: absolute;
+    right: 28%;
+    bottom: 2%;
+    width: 5%;
+    max-width: 14px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 1.8s ease-in-out infinite 0.5s;
+}
+
+.petBlingG {
+    position: absolute;
+    left: 14%;
+    top: 42%;
+    width: 5%;
+    max-width: 14px;
+    pointer-events: none;
+    z-index: 5;
+    animation: blingTwinkle 2s ease-in-out infinite 0.8s;
+}
+
+.bubble {
+    position: absolute;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.2s ease;
+    z-index: 4;
+}
+
+.bubbleIdle {
+    animation: bubblePulse 0.9s ease-in-out infinite;
+}
+
+.bubbleLarge {
+    width: 24%;
+    max-width: 72px;
+}
+
+.bubbleSmall {
+    width: 11%;
+    max-width: 34px;
+}
+
+.bubbleImg {
+    width: 100%;
+    display: block;
+    pointer-events: none;
+}
+
+.bubbleWeakened {
+    opacity: 0.5;
+}
+
+.bubbleShaking {
+    animation: bubbleShake 0.55s ease-in-out;
+}
+
+.bubblePopping {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.2);
+    pointer-events: none;
+}
+
+.cleaningBarContainer {
+    position: absolute;
+    left: 50%;
+    bottom: 14%;
+    transform: translateX(-50%);
+    width: 85%;
+    max-width: 334px;
+    z-index: 5;
+}
+
+.cleaningBarFrame {
+    width: 100%;
+    display: block;
+}
+
+.cleaningBarTrack {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95%;
+    height: 55%;
+    overflow: hidden;
+    border-radius: 2px;
+}
+
+.cleaningBarFill {
+    height: 100%;
+    background: #a3d6db;
+    border-radius: 2px;
+    transition: width 0.2s ease;
+}
+
+.plus5Text {
+    position: absolute;
+    width: 120px;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 1s;
+}
+
+.showPlus5 {
+    opacity: 1;
+    animation: plusTextFadeMove 0.8s forwards;
+}
+
+@keyframes bubblePulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+@keyframes blingTwinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+@keyframes blingTwinkleFlip {
+    0%, 100% { opacity: 1; transform: scaleX(-1) scale(1); }
+    50% { opacity: 0.55; transform: scaleX(-1) scale(0.85); }
+}
+
+@keyframes bubbleShake {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    12% { transform: translate(calc(-50% - 10px), calc(-50% - 3px)) rotate(-12deg) scale(1.06); }
+    28% { transform: translate(calc(-50% + 10px), calc(-50% + 3px)) rotate(12deg) scale(1.06); }
+    44% { transform: translate(calc(-50% - 8px), calc(-50% - 2px)) rotate(-10deg) scale(1.04); }
+    60% { transform: translate(calc(-50% + 8px), calc(-50% + 2px)) rotate(10deg) scale(1.04); }
+    76% { transform: translate(calc(-50% - 5px), -50%) rotate(-6deg) scale(1.02); }
+    88% { transform: translate(calc(-50% + 5px), -50%) rotate(6deg) scale(1.02); }
+}
+
+@keyframes plusTextFadeMove {
+    0% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+    80% { opacity: 1; transform: translate(-50%, -50%) translateY(-20px); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-30px); }
+}
