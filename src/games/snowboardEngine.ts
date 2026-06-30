@@ -5,6 +5,9 @@ import {
   FORK_SPLIT_DOG_OFFSET_UP_RATIO,
 } from "@/utils/walkFork";
 
+type WalkLane = 0 | 1 | 2;
+const WALK_LANES: WalkLane[] = [0, 1, 2];
+
 export interface SnowboardAssets {
   snowboardBg: string;
   snowboardBgForkGrass?: string;
@@ -33,6 +36,10 @@ const TOKEN_WIDTH_RATIO = 0.075;
 const CLOCK_WIDTH_RATIO = 0.085;
 const STICK_WIDTH_RATIO = 72 / 393;
 const SPAWN_SAFE_ZONE_RATIO = 0.17;
+/** Min vertical clearance before the next spawn row (fraction of canvas height). */
+const SPAWN_MIN_GAP_RATIO = 0.3;
+/** Padding between object hitboxes when checking overlap. */
+const SPAWN_BOX_PADDING_PX = 10;
 const DOG_ANIM_INTERVAL_MS = 130;
 const DOG_ANIM_SEQUENCE = ["snowboardRight", "snowboardLeft"] as const;
 
@@ -80,7 +87,7 @@ export const WALK_GAME_DURATION_SEC = 30;
 const GAME_DURATION_MS = WALK_GAME_DURATION_SEC * 1000;
 const FPS_INTERVAL = 1000 / 35;
 const MAX_TRACKS = 50;
-const MAX_TRACK_OBJECTS = 20;
+const MAX_TRACK_OBJECTS = 24;
 const MAX_SCROLL_SPEED = 11;
 const SCROLL_SPEED_INCREMENT = 0.16;
 const SCROLL_ACCELERATION = 1.00035;
@@ -106,13 +113,13 @@ const INVINCIBILITY_MIN_OPACITY = 0.6;
 const CLOCK_BONUS_MS = 2000;
 /**
  * Spawn weights (roll is 0 … SPAWN_ROLL_RANGE - 1).
- * Tuned for ~30s walks: more coins (+2–3) and clocks (+3–4) vs the old 12s baseline.
+ * Biased toward poop/sticks so the path feels busier without starving coins/clocks.
  */
-const SPAWN_WEIGHT_TOKEN = 40;
-const SPAWN_WEIGHT_CLOCK = 30;
-const SPAWN_WEIGHT_WATER = 28;
-const SPAWN_WEIGHT_POOP = 28;
-const SPAWN_WEIGHT_STICK = 32;
+const SPAWN_WEIGHT_TOKEN = 30;
+const SPAWN_WEIGHT_CLOCK = 22;
+const SPAWN_WEIGHT_WATER = 20;
+const SPAWN_WEIGHT_POOP = 42;
+const SPAWN_WEIGHT_STICK = 46;
 const SPAWN_ROLL_RANGE =
   SPAWN_WEIGHT_TOKEN +
   SPAWN_WEIGHT_CLOCK +
@@ -330,7 +337,7 @@ export class SnowboardEngine {
     this.callbacks.onLivesChange(3);
     this.callbacks.onTimerChange(WALK_GAME_DURATION_SEC);
     this.layoutEntities();
-    this.spawnTrackObject();
+    this.spawnWave();
   }
 
   private layoutEntities(): void {
@@ -396,64 +403,162 @@ export class SnowboardEngine {
     return this.canAcceptForkPick();
   }
 
-  private spawnTrackObject(): void {
+  private spawnWave(): void {
+    const roll = Math.random();
+
+    if (roll < 0.3) {
+      this.spawnKindInLane(this.rollSpawnKind("collectible"), this.pickRandomLanes(1)[0]);
+      return;
+    }
+
+    if (roll < 0.58) {
+      this.spawnKindInLane(this.rollSpawnKind("hazard"), this.pickRandomLanes(1)[0]);
+      return;
+    }
+
+    if (roll < 0.84) {
+      const [laneA, laneB] = this.pickRandomLanes(2);
+      this.spawnKindInLane(this.rollSpawnKind("hazard"), laneA);
+      this.spawnKindInLane(this.rollSpawnKind("hazard"), laneB);
+      return;
+    }
+
+    const hazardLane = this.pickRandomLanes(1)[0];
+    const safeLanes = WALK_LANES.filter((lane) => lane !== hazardLane);
+    this.spawnKindInLane(this.rollSpawnKind("hazard"), hazardLane);
+    this.spawnKindInLane(
+      this.rollSpawnKind("collectible"),
+      safeLanes[Math.floor(Math.random() * safeLanes.length)]
+    );
+  }
+
+  private rollSpawnKind(
+    pool: "collectible" | "hazard" | "any"
+  ): TrackObject["kind"] {
+    if (pool === "collectible") {
+      return Math.random() < 0.58 ? "token" : "clock";
+    }
+
+    if (pool === "hazard") {
+      const roll = Math.floor(
+        Math.random() * (SPAWN_WEIGHT_WATER + SPAWN_WEIGHT_POOP + SPAWN_WEIGHT_STICK)
+      );
+      if (roll < SPAWN_WEIGHT_WATER) return "water";
+      if (roll < SPAWN_WEIGHT_WATER + SPAWN_WEIGHT_POOP) return "poop";
+      return "stick";
+    }
+
+    const roll = Math.floor(Math.random() * SPAWN_ROLL_RANGE);
+    if (roll < SPAWN_WEIGHT_TOKEN) return "token";
+    if (roll < SPAWN_WEIGHT_TOKEN + SPAWN_WEIGHT_CLOCK) return "clock";
+    if (roll < SPAWN_WEIGHT_TOKEN + SPAWN_WEIGHT_CLOCK + SPAWN_WEIGHT_WATER) return "water";
+    if (
+      roll <
+      SPAWN_WEIGHT_TOKEN + SPAWN_WEIGHT_CLOCK + SPAWN_WEIGHT_WATER + SPAWN_WEIGHT_POOP
+    ) {
+      return "poop";
+    }
+    return "stick";
+  }
+
+  private pickRandomLanes(count: 1 | 2): WalkLane[] {
+    const shuffled = [...WALK_LANES].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  }
+
+  private spawnKindInLane(kind: TrackObject["kind"], lane: WalkLane): boolean {
+    const spec = this.getSpawnSpec(kind);
+    if (!spec) return false;
+
+    const y = -spec.height;
+    const x = this.laneCenterX(lane, spec.width);
+    if (this.wouldOverlap({ x, y, width: spec.width, height: spec.height })) {
+      return false;
+    }
+
+    this.trackObjects.push({
+      width: spec.width,
+      height: spec.height,
+      x,
+      y,
+      img: spec.img,
+      isToken: kind === "token",
+      isCollected: false,
+      kind,
+    });
+    return true;
+  }
+
+  private getSpawnSpec(
+    kind: TrackObject["kind"]
+  ): { img: LoadedImage; width: number; height: number } | null {
     const tokenImg = this.images.token;
     const clockImg = this.images.clock;
     const waterImg = this.images.water;
     const poopImg = this.images.trap;
     const stickImg = this.images.stick;
-    if (!tokenImg || !waterImg || !poopImg || !stickImg) return;
 
-    const roll = Math.floor(Math.random() * SPAWN_ROLL_RANGE);
-    let width = 0;
-    let height = 0;
-    let img = waterImg;
-    let kind: TrackObject["kind"] = "water";
-
-    if (roll < SPAWN_WEIGHT_TOKEN) {
-      img = tokenImg;
-      kind = "token";
-      ({ width, height } = this.sizeFromImage(img, TOKEN_WIDTH_RATIO));
-    } else if (roll < SPAWN_WEIGHT_TOKEN + SPAWN_WEIGHT_CLOCK && clockImg) {
-      img = clockImg;
-      kind = "clock";
-      ({ width, height } = this.sizeFromImage(img, CLOCK_WIDTH_RATIO));
-    } else if (roll < SPAWN_WEIGHT_TOKEN + SPAWN_WEIGHT_CLOCK + SPAWN_WEIGHT_WATER) {
-      img = waterImg;
-      kind = "water";
-      ({ width, height } = this.sizeFromImage(img, LARGE_OBSTACLE_WIDTH_RATIO));
-    } else if (
-      roll <
-      SPAWN_WEIGHT_TOKEN + SPAWN_WEIGHT_CLOCK + SPAWN_WEIGHT_WATER + SPAWN_WEIGHT_POOP
-    ) {
-      img = poopImg;
-      kind = "poop";
-      ({ width, height } = this.sizeFromImage(img, SMALL_OBSTACLE_WIDTH_RATIO));
-    } else if (
-      roll <
-      SPAWN_WEIGHT_TOKEN +
-        SPAWN_WEIGHT_CLOCK +
-        SPAWN_WEIGHT_WATER +
-        SPAWN_WEIGHT_POOP +
-        SPAWN_WEIGHT_STICK
-    ) {
-      img = stickImg;
-      kind = "stick";
-      ({ width, height } = this.sizeFromImage(img, STICK_WIDTH_RATIO));
-    } else {
-      return;
+    switch (kind) {
+      case "token":
+        return tokenImg
+          ? { img: tokenImg, ...this.sizeFromImage(tokenImg, TOKEN_WIDTH_RATIO) }
+          : null;
+      case "clock":
+        return clockImg
+          ? { img: clockImg, ...this.sizeFromImage(clockImg, CLOCK_WIDTH_RATIO) }
+          : null;
+      case "water":
+        return waterImg
+          ? { img: waterImg, ...this.sizeFromImage(waterImg, LARGE_OBSTACLE_WIDTH_RATIO) }
+          : null;
+      case "poop":
+        return poopImg
+          ? { img: poopImg, ...this.sizeFromImage(poopImg, SMALL_OBSTACLE_WIDTH_RATIO) }
+          : null;
+      case "stick":
+        return stickImg
+          ? { img: stickImg, ...this.sizeFromImage(stickImg, STICK_WIDTH_RATIO) }
+          : null;
+      default:
+        return null;
     }
+  }
 
-    this.trackObjects.push({
-      width,
-      height,
-      x: this.randomSpawnX(width),
-      y: -height,
-      img,
-      isToken: kind === "token",
-      isCollected: false,
-      kind,
-    });
+  private laneCenterX(lane: WalkLane, width: number): number {
+    const center = this.canvasWidth * FORK_LANE_CENTER_X_RATIO[lane];
+    const x = center - width / 2;
+    const { minX, maxX } = this.getPlayableLaneBounds(width);
+    return Math.max(minX, Math.min(maxX, x));
+  }
+
+  private rectsOverlap(
+    a: { x: number; y: number; width: number; height: number },
+    b: { x: number; y: number; width: number; height: number },
+    padding = SPAWN_BOX_PADDING_PX
+  ): boolean {
+    return !(
+      a.x + a.width + padding < b.x ||
+      b.x + b.width + padding < a.x ||
+      a.y + a.height + padding < b.y ||
+      b.y + b.height + padding < a.y
+    );
+  }
+
+  private wouldOverlap(rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }): boolean {
+    return this.trackObjects.some(
+      (object) => !object.isCollected && this.rectsOverlap(rect, object)
+    );
+  }
+
+  private getLeadSpawnY(): number {
+    const active = this.trackObjects.filter((object) => !object.isCollected);
+    if (!active.length) return Number.POSITIVE_INFINITY;
+    return Math.min(...active.map((object) => object.y));
   }
 
   private isCollectibleKind(kind: TrackObject["kind"]): boolean {
@@ -485,14 +590,6 @@ export class SnowboardEngine {
       return 1 - phase * 2 * (1 - INVINCIBILITY_MIN_OPACITY);
     }
     return INVINCIBILITY_MIN_OPACITY + (phase - 0.5) * 2 * (1 - INVINCIBILITY_MIN_OPACITY);
-  }
-
-  private randomSpawnX(width: number): number {
-    const { minX, maxX } = this.getPlayableLaneBounds(width);
-    if (maxX <= minX) {
-      return minX;
-    }
-    return minX + Math.random() * (maxX - minX);
   }
 
   private drawTiledLayer(img: LoadedImage): void {
@@ -945,9 +1042,10 @@ export class SnowboardEngine {
   }
 
   private maybeSpawnTrackObject(): void {
-    const last = this.trackObjects[this.trackObjects.length - 1];
-    if (!last || last.y > this.canvasHeight / 2) {
-      this.spawnTrackObject();
+    const leadY = this.getLeadSpawnY();
+    const gapThreshold = this.canvasHeight * SPAWN_MIN_GAP_RATIO;
+    if (leadY > gapThreshold) {
+      this.spawnWave();
       if (this.trackObjects.length > MAX_TRACK_OBJECTS) {
         this.trackObjects.shift();
       }

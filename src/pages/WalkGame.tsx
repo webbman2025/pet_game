@@ -34,12 +34,36 @@ const TUTORIAL_PAGES = [
   },
   {
     title: "Keep walking!",
-    body: "Sometimes, we might meet a friend along the way. Choose the right path and earn extra points!",
+    body: "Sometimes, we might meet a friend along the way. Swipe left, up, or right at the fork to pick a path and earn extra points!",
     caption: null,
   },
 ] as const;
 
 const SWIPE_THRESHOLD = 40;
+const FORK_SWIPE_THRESHOLD = 48;
+
+const resolveForkLaneFromSwipe = (deltaX: number, deltaY: number): ForkLane | null => {
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  if (absX < FORK_SWIPE_THRESHOLD && absY < FORK_SWIPE_THRESHOLD) {
+    return null;
+  }
+
+  if (absY > absX && deltaY < -FORK_SWIPE_THRESHOLD) {
+    return 1;
+  }
+
+  if (deltaX < -FORK_SWIPE_THRESHOLD && absX >= absY) {
+    return 0;
+  }
+
+  if (deltaX > FORK_SWIPE_THRESHOLD && absX >= absY) {
+    return 2;
+  }
+
+  return null;
+};
 
 type GameResult = "finish" | "fail" | null;
 
@@ -57,6 +81,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
   const acquirePointRef = useRef(acquirePoint);
   acquirePointRef.current = acquirePoint;
   const swipeStartXRef = useRef<number | null>(null);
+  const forkSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const pendingStartRef = useRef(false);
   const prevScoreRef = useRef(0);
   const minusHeartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -257,6 +282,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
     setIsForkWalking(false);
     setShowForkChoiceHint(false);
     setPickedForkLane(null);
+    forkSwipeStartRef.current = null;
     setForkRevealPhase(null);
   };
 
@@ -387,6 +413,9 @@ const WalkGame: React.FC<WalkGameProps> = ({
     resetGame();
   };
 
+  const forkChoiceActive =
+    showForkScreen && !isForkWalking && pickedForkLane === null;
+
   const handleSwipeStart = (clientX: number) => {
     swipeStartXRef.current = clientX;
   };
@@ -404,6 +433,22 @@ const WalkGame: React.FC<WalkGameProps> = ({
     swipeStartXRef.current = null;
   };
 
+  const handleForkSwipeStart = (clientX: number, clientY: number) => {
+    if (!forkChoiceActive) return;
+    forkSwipeStartRef.current = { x: clientX, y: clientY };
+  };
+
+  const handleForkSwipeEnd = (clientX: number, clientY: number) => {
+    const start = forkSwipeStartRef.current;
+    forkSwipeStartRef.current = null;
+    if (!start || !forkChoiceActive) return;
+
+    const lane = resolveForkLaneFromSwipe(clientX - start.x, clientY - start.y);
+    if (lane !== null) {
+      handleForkPick(lane);
+    }
+  };
+
   const totalPoints = gameState.point + earnedTotal;
   const showFailScreen = isGameOver && gameResult === "fail" && !showRetryModal;
   const showTimeUpBlack = showTimeUpScreen && !showFailScreen && !showForkScreen && !isFinishRush;
@@ -416,11 +461,6 @@ const WalkGame: React.FC<WalkGameProps> = ({
   };
 
   const forkItemAnchorStyle = (lane: ForkLane): React.CSSProperties => ({
-    left: `${FORK_LANE_CENTER_X_RATIO[lane] * 100}%`,
-    top: `${FORK_ITEM_TOP_RATIO * 100}%`,
-  });
-
-  const forkLaneHitStyle = (lane: ForkLane): React.CSSProperties => ({
     left: `${FORK_LANE_CENTER_X_RATIO[lane] * 100}%`,
     top: `${FORK_ITEM_TOP_RATIO * 100}%`,
   });
@@ -499,9 +539,6 @@ const WalkGame: React.FC<WalkGameProps> = ({
     ball: styles.modalDogBall,
     food: styles.modalDogFood,
   }[endModalItem];
-
-  const forkChoiceActive =
-    showForkScreen && !isForkWalking && pickedForkLane === null;
 
   const tutorialOverlay = (
     <div className={styles.tutorialOverlay}>
@@ -694,10 +731,33 @@ const WalkGame: React.FC<WalkGameProps> = ({
             isForkWalking ? styles.forkOverlayWalking : styles.forkOverlayChoice,
           ].join(" ")}
           role="group"
-          aria-label={isForkWalking ? undefined : "Choose a path"}
+          aria-label={isForkWalking ? undefined : "Swipe left, up, or right to choose a path"}
+          onTouchStart={(event) => {
+            if (!forkChoiceActive) return;
+            event.preventDefault();
+            handleForkSwipeStart(event.touches[0].clientX, event.touches[0].clientY);
+          }}
+          onTouchEnd={(event) => {
+            if (!forkChoiceActive) return;
+            event.preventDefault();
+            handleForkSwipeEnd(
+              event.changedTouches[0].clientX,
+              event.changedTouches[0].clientY
+            );
+          }}
+          onMouseDown={(event) => {
+            if (!forkChoiceActive) return;
+            handleForkSwipeStart(event.clientX, event.clientY);
+          }}
+          onMouseUp={(event) => {
+            if (!forkChoiceActive) return;
+            handleForkSwipeEnd(event.clientX, event.clientY);
+          }}
         >
           {showForkChoiceHint && (
-            <p className={styles.forkChoicePrompt}>Choose a path</p>
+            <p className={styles.forkChoicePrompt}>
+              Swipe ← ↑ → to choose a path
+            </p>
           )}
 
           {([0, 1, 2] as ForkLane[]).map((lane) => (
@@ -709,23 +769,6 @@ const WalkGame: React.FC<WalkGameProps> = ({
               {renderForkLaneContent(lane, forkLayout.lanes[lane])}
             </div>
           ))}
-
-          {!isForkWalking &&
-            pickedForkLane === null &&
-            ([0, 1, 2] as ForkLane[]).map((lane) => (
-              <button
-                key={`hit-${lane}`}
-                type="button"
-                className={styles.forkLaneHit}
-                style={forkLaneHitStyle(lane)}
-                onPointerDown={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  handleForkPick(lane);
-                }}
-                aria-label={`Choose path ${lane + 1}`}
-              />
-            ))}
         </div>
       )}
 
