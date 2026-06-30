@@ -756,7 +756,9 @@ const WalkGame: React.FC<WalkGameProps> = ({
         >
           {showForkChoiceHint && (
             <p className={styles.forkChoicePrompt}>
-              Swipe ← ↑ → to choose a path
+              Swipe ← ↑ →
+              <br />
+              to choose a path
             </p>
           )}
 
