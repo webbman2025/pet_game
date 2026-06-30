@@ -562,6 +562,7 @@ export default function App() {
           changeName={changeName}
           acquirePoint={acquirePoint}
           isFirstEntry={isFirstEntry}
+          onBackToMenu={handleBackToMenu}
         />
       )}
       {page === "feedGame" && (

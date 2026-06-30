@@ -180,6 +180,35 @@
   }
 }
 
+.petNameIconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.petNameIcon {
+  width: 42px;
+  height: 42px;
+  display: block;
+  image-rendering: pixelated;
+}
+
 .petNameInput {
   font-size: 18px;
   font-weight: 600;
@@ -580,6 +609,168 @@
   100% {
     transform: translateX(100%);
   }
+}
+
+.gameTutorialOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.gameTutorialModal {
+  position: relative;
+  width: min(352px, 90%);
+  touch-action: manipulation;
+}
+
+.gameTutorialFrame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  object-fit: fill;
+}
+
+.gameTutorialContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 44px 28px 56px;
+  overflow: hidden;
+}
+
+.gameTutorialCarouselViewport {
+  width: 100%;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.gameTutorialTrack {
+  display: flex;
+  transition: transform 0.25s ease-out;
+}
+
+.gameTutorialSlide {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.gameTutorialTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  padding: 0 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gameTutorialText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.2;
+  text-align: center;
+  padding: 0 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gameTutorialPreview {
+  width: 200px;
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: 18vh;
+  display: block;
+  object-fit: contain;
+}
+
+.gameTutorialCaption {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: center;
+  min-height: 0;
+  padding: 0 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gameTutorialCaptionSpacer {
+  margin: 0;
+  min-height: 0;
+}
+
+.gameTutorialDots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.gameTutorialDot {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  background: #d3864e;
+  flex-shrink: 0;
+}
+
+.gameTutorialDotActive {
+  background: #612d16;
+}
+
+.gameTutorialOkBtn {
+  position: relative;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 145px;
+  cursor: pointer;
+  z-index: 2;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.gameTutorialOkBtnBg {
+  width: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.gameTutorialOkBtnText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -56%);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  pointer-events: none;
 }
 
 // ===== RESPONSIVE =====

@@ -335,10 +335,16 @@ const SpaGame: React.FC<SpaGameProps> = ({
                 src={assets.ui.spaGameTutorialPreview}
                 alt="Spa preview"
               />
-              <button className={styles.tutorialBtn} onClick={handleStartGame} type="button">
-                <img className={styles.tutorialBtnBg} src={assets.ui.primaryBtn} alt="" />
-                <span className={styles.tutorialBtnText}>Start</span>
-              </button>
+              <div className={styles.tutorialActions}>
+                <button className={styles.tutorialBtn} onClick={handleStartGame} type="button">
+                  <img className={styles.tutorialBtnBg} src={assets.ui.primaryBtn} alt="" />
+                  <span className={styles.tutorialBtnText}>Start</span>
+                </button>
+                <button className={styles.tutorialBtnSecondary} onClick={onBackToMenu} type="button">
+                  <img className={styles.tutorialBtnBg} src={assets.ui.secondaryBtn} alt="" />
+                  <span className={styles.tutorialBtnSecondaryText}>Back</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

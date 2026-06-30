@@ -229,10 +229,16 @@ const FeedGame: React.FC<FeedGameProps> = ({
                   <p className={styles.modalText}>Pick my favourite food!</p>
                   <p className={styles.modalText}>Hurry up - I can&apos;t wait!</p>
 
-                  <button className={styles.modalBtn} onClick={handleStartGame} type="button">
-                    <img className={styles.modalBtnBg} src={assets.ui.primaryBtn} alt="Start" />
-                    <span className={styles.modalBtnText}>Start</span>
-                  </button>
+                  <div className={styles.modalActions}>
+                    <button className={styles.modalBtn} onClick={handleStartGame} type="button">
+                      <img className={styles.modalBtnBg} src={assets.ui.primaryBtn} alt="Start" />
+                      <span className={styles.modalBtnText}>Start</span>
+                    </button>
+                    <button className={styles.modalBtnSecondary} onClick={onBackToMenu} type="button">
+                      <img className={styles.modalBtnBg} src={assets.ui.secondaryBtn} alt="Back" />
+                      <span className={styles.modalBtnSecondaryText}>Back</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
