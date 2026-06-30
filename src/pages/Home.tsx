@@ -1,9 +1,18 @@
 import styles from "@/styles/Home.module.scss";
 import { gameConfig } from "@/config/gameConfig";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatNumberWithCommas } from "@/utils/index";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import { GameState } from "@/components/GameState";
+import {
+  DAILY_TASK_TARGETS,
+  clampSatisfaction,
+  areAllDailyTasksComplete,
+  getSatisfactionLevel,
+  showsMoodBubble,
+  getGameButtonCooldownState,
+} from "@/utils/satisfaction";
+import { getPetAnimationSrc, isUnhappyPetPose } from "@/utils/petAnimation";
 import axios from "axios";
 
 interface PoopPosition {
@@ -60,6 +69,7 @@ const Home: React.FC<HomeProps> = ({
   const [feedCooldownLabel, setFeedCooldownLabel] = useState("");
   const [walkCooldownLabel, setWalkCooldownLabel] = useState("");
   const [spaCooldownLabel, setSpaCooldownLabel] = useState("");
+  const [sharedCooldownLabel, setSharedCooldownLabel] = useState("");
   const [showEndModal, setShowEndModal] = useState(false);
   const poopCountRef = useRef(gameState.poopCount);
   const gameStateRef = useRef(gameState);
@@ -74,6 +84,10 @@ const Home: React.FC<HomeProps> = ({
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
+
+  useEffect(() => {
+    lastResumeTimeRef.current = Date.now();
+  }, [gameState.game1Timer, gameState.game2Timer, gameState.game3Timer]);
 
   const handlePetNameClick = () => {
     setIsEditingName(true);
@@ -99,26 +113,6 @@ const Home: React.FC<HomeProps> = ({
       changeName(tempName.trim());
       setIsEditingName(false);
     }
-  };
-
-  const FEED_MAX_PLAYS = 3;
-  const WALK_MAX_PLAYS = 2;
-  const SPA_MAX_PLAYS = 1;
-  const FEED_COOLDOWN_MS = 2 * 60 * 60 * 1000;
-  const WALK_COOLDOWN_MS = 30 * 60 * 1000;
-
-  const formatRemainingTime = (milliseconds: number) => {
-    const totalSeconds = Math.ceil(milliseconds / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-
-  const getRemainingCooldown = (lastPlayedTimestamp: number, cooldownMs: number) => {
-    if (!lastPlayedTimestamp || cooldownMs <= 0) return 0;
-    return Math.max(0, cooldownMs - lastPlayedTimestamp);
   };
 
   const POOP_ICON_SIZE = 15;
@@ -217,30 +211,19 @@ const Home: React.FC<HomeProps> = ({
 
     timer = setInterval(() => {
       const latestGameState = gameStateRef.current;
-      const now = Date.now();
-      const currentSessionTime = now - lastResumeTimeRef.current;
-     
-      // Task completion status (daily play counts expected from PlayTimes fields)
-      const feedCompletions = Math.min(FEED_MAX_PLAYS, latestGameState.game1PlayTimes);
-      const walkCompletions = Math.min(WALK_MAX_PLAYS, latestGameState.game2PlayTimes);
-      const spaCompletions = Math.min(SPA_MAX_PLAYS, latestGameState.game3PlayTimes);
+      const currentSessionTime = Date.now() - lastResumeTimeRef.current;
+      const cooldownState = getGameButtonCooldownState(
+        latestGameState,
+        currentSessionTime
+      );
 
-      const feedCooldownMs = getRemainingCooldown(latestGameState.game1Timer + currentSessionTime, FEED_COOLDOWN_MS);
-      const walkCooldownMs = getRemainingCooldown(latestGameState.game2Timer + currentSessionTime, WALK_COOLDOWN_MS);
-      const spaCooldownMs = getRemainingCooldown(latestGameState.game3Timer + currentSessionTime, 0);
-
-      const nextIsFeedDisabled = latestGameState.game1Timer > 0 && (feedCompletions >= FEED_MAX_PLAYS || feedCooldownMs > 0);
-      const nextIsWalkDisabled = latestGameState.game2Timer > 0 && (walkCompletions >= WALK_MAX_PLAYS || walkCooldownMs > 0);
-      const nextIsSpaDisabled = latestGameState.game3Timer > 0 && (spaCompletions >= SPA_MAX_PLAYS);
-
-      setIsFeedDisabled(nextIsFeedDisabled);
-      setIsWalkDisabled(nextIsWalkDisabled);
-      setIsSpaDisabled(nextIsSpaDisabled);
-
-      setFeedCooldownLabel(nextIsFeedDisabled && feedCooldownMs > 0 && feedCompletions < FEED_MAX_PLAYS ? formatRemainingTime(feedCooldownMs) : "");
-      setWalkCooldownLabel(nextIsWalkDisabled && walkCooldownMs > 0 && walkCompletions < WALK_MAX_PLAYS ? formatRemainingTime(walkCooldownMs) : "");
-      setSpaCooldownLabel(nextIsSpaDisabled ? "" : "");
-
+      setIsFeedDisabled(cooldownState.isFeedDisabled);
+      setIsWalkDisabled(cooldownState.isWalkDisabled);
+      setIsSpaDisabled(cooldownState.isSpaDisabled);
+      setFeedCooldownLabel(cooldownState.feedCooldownLabel);
+      setWalkCooldownLabel(cooldownState.walkCooldownLabel);
+      setSpaCooldownLabel(cooldownState.spaCooldownLabel);
+      setSharedCooldownLabel(cooldownState.sharedCooldownLabel);
     }, 200);
     
     return () => {
@@ -248,24 +231,25 @@ const Home: React.FC<HomeProps> = ({
     };
   }, []);
 
-  // Calculate satisfaction bar percentage
-  const satisfactionPercentage = Math.max(0, Math.min(100, gameState.satisfaction));
+  const satisfactionPercentage = clampSatisfaction(gameState.satisfaction);
+  const allDailyTasksComplete = areAllDailyTasksComplete(gameState);
+  const satisfactionLevel = getSatisfactionLevel(
+    satisfactionPercentage,
+    allDailyTasksComplete
+  );
+  const showMoodBubble = showsMoodBubble(satisfactionPercentage);
 
-  const petImageSrc = (() => {
-    if (satisfactionPercentage >= 100) {
-      return Math.random() < 0.5 ? assets.ui.petVeryHappyDanceAnim : assets.ui.petVeryHappyAnim;
-    }
-    if (satisfactionPercentage >= 70) {
-      return assets.ui.petHappyAnim;
-    }
-    if (satisfactionPercentage >= 50) {
-      return assets.ui.petNormalAnim;
-    }
-    if (satisfactionPercentage >= 30) {
-      return assets.ui.petBoringAnim;
-    }
-    return assets.ui.petUnhappyAnim;
-  })();
+  const petImageSrc = useMemo(
+    () => getPetAnimationSrc(satisfactionLevel, assets.ui),
+    [satisfactionLevel, assets.ui]
+  );
+
+  const feedTaskComplete =
+    gameState.game1PlayTimes >= DAILY_TASK_TARGETS.feed;
+  const walkTaskComplete =
+    gameState.game2PlayTimes >= DAILY_TASK_TARGETS.walk;
+  const spaTaskComplete =
+    gameState.game3PlayTimes >= DAILY_TASK_TARGETS.spa;
 
   
   // Submit score to API when poop is removed
@@ -376,16 +360,41 @@ const Home: React.FC<HomeProps> = ({
             className={styles.satisfactionFill}
             style={{ width: `${satisfactionPercentage}%` }}
           />
+          <span className={styles.satisfactionPercent}>
+            {satisfactionPercentage}%
+          </span>
         </div>
       </div>
 
       {/* Pet Image - Center */}
       <div className={styles.petImageContainer} ref={petImageContainerRef}>
+        {showMoodBubble && (
+          <div className={styles.moodBubble}>
+            <img
+              src={assets.ui.feedGameThinkingBubble}
+              className={styles.moodBubbleBg}
+              alt=""
+            />
+            <div className={styles.moodBubbleContent}>
+              <img
+                src={assets.ui.feedGameHeart}
+                className={styles.moodBubbleIcon}
+                alt=""
+              />
+              <span className={styles.moodBubbleText}>Happy!</span>
+            </div>
+          </div>
+        )}
+
         <img
           ref={petImageRef}
           src={petImageSrc}
           alt="Pet"
-          className={satisfactionPercentage < 30 ? styles.petImageUnhappy : styles.petImage}
+          className={
+            isUnhappyPetPose(satisfactionLevel)
+              ? styles.petImageUnhappy
+              : styles.petImage
+          }
         />
 
         {poopPositions.map((position) => (
@@ -404,6 +413,18 @@ const Home: React.FC<HomeProps> = ({
 
       {/* Game Buttons - Bottom Section */}
       <div className={styles.gameButtonsContainer}>
+        {sharedCooldownLabel ? (
+          <div className={styles.sharedCooldownLabel}>
+            <img
+              src={assets.ui.timerIcon}
+              className={styles.cooldownIcon}
+              alt="Timer"
+            />
+            <span>{sharedCooldownLabel}</span>
+          </div>
+        ) : null}
+
+        <div className={styles.gameButtonsRow}>
         <div className={styles.gameButtonWrapper}>
           {feedCooldownLabel ? (
             <div className={styles.gameCooldownLabel}>
@@ -457,6 +478,7 @@ const Home: React.FC<HomeProps> = ({
             <span className={styles.buttonText}>Spa</span>
           </button>
         </div>
+        </div>
       </div>
 
       {/* Daily Tasks Box - Bottom */}
@@ -471,15 +493,24 @@ const Home: React.FC<HomeProps> = ({
             <img src={assets.ui.feedGameTaskIcon} className={styles.taskIcon} />
             <span>Feed 3 times</span>
           </div>
-          <div className={styles.taskProgressBar}>
-            {[0, 1, 2].map((index) => (
-              <div
-                key={`feed-${index}`}
-                className={`${styles.progressSegment} ${
-                  index < gameState.game1PlayTimes ? styles.completed : ''
-                }`}
+          <div className={styles.taskProgressWrap}>
+            <div className={styles.taskProgressBar}>
+              {[0, 1, 2].map((index) => (
+                <div
+                  key={`feed-${index}`}
+                  className={`${styles.progressSegment} ${
+                    index < gameState.game1PlayTimes ? styles.completed : ""
+                  }`}
+                />
+              ))}
+            </div>
+            {feedTaskComplete && (
+              <img
+                src={assets.ui.taskTickIcon}
+                className={styles.taskTickIcon}
+                alt="Complete"
               />
-            ))}
+            )}
           </div>
         </div>
 
@@ -489,15 +520,24 @@ const Home: React.FC<HomeProps> = ({
             <img src={assets.ui.walkGameTaskIcon} className={styles.taskIcon} />
             <span>Walk 2 times</span>
           </div>
-          <div className={styles.taskProgressBar}>
-            {[0, 1].map((index) => (
-              <div
-                key={`walk-${index}`}
-                className={`${styles.progressSegment} ${
-                  index < gameState.game2PlayTimes ? styles.completed : ''
-                }`}
+          <div className={styles.taskProgressWrap}>
+            <div className={styles.taskProgressBar}>
+              {[0, 1].map((index) => (
+                <div
+                  key={`walk-${index}`}
+                  className={`${styles.progressSegment} ${
+                    index < gameState.game2PlayTimes ? styles.completed : ""
+                  }`}
+                />
+              ))}
+            </div>
+            {walkTaskComplete && (
+              <img
+                src={assets.ui.taskTickIcon}
+                className={styles.taskTickIcon}
+                alt="Complete"
               />
-            ))}
+            )}
           </div>
         </div>
 
@@ -507,15 +547,24 @@ const Home: React.FC<HomeProps> = ({
             <img src={assets.ui.spaGameTaskIcon} className={styles.taskIcon} />
             <span>Spa 1 time</span>
           </div>
-          <div className={styles.taskProgressBar}>
-            {[0].map((index) => (
-              <div
-                key={`spa-${index}`}
-                className={`${styles.progressSegment} ${
-                  index < gameState.game3PlayTimes ? styles.completed : ''
-                }`}
+          <div className={styles.taskProgressWrap}>
+            <div className={styles.taskProgressBar}>
+              {[0].map((index) => (
+                <div
+                  key={`spa-${index}`}
+                  className={`${styles.progressSegment} ${
+                    index < gameState.game3PlayTimes ? styles.completed : ""
+                  }`}
+                />
+              ))}
+            </div>
+            {spaTaskComplete && (
+              <img
+                src={assets.ui.taskTickIcon}
+                className={styles.taskTickIcon}
+                alt="Complete"
               />
-            ))}
+            )}
           </div>
         </div>
       </div>

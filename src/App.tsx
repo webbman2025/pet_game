@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import Home from "@/pages/Home";
 import FeedGame from "@/pages/FeedGame";
@@ -9,6 +9,18 @@ import SpaGame from "@/pages/SpaGame";
 
 import { GameState } from "@/components/GameState";
 import { gameConfig } from "@/config/gameConfig";
+import {
+  applyGameReward,
+  mergeAcquirePointResponse,
+  mergeFetchedGameState,
+  parseGameStateFromApi,
+} from "@/utils/gameRewards";
+import {
+  applyDailyReset,
+  applyDailyResetIfNewDay,
+} from "@/utils/dailyReset";
+import { clampSatisfaction } from "@/utils/satisfaction";
+import DevDebugPanel from "@/components/DevDebugPanel";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import "@/styles/global.scss";
 
@@ -22,6 +34,7 @@ export default function App() {
   const [audioOn, setAudioOn] = useState(true);
   const [isFirstEntry, setIsFirstEntry] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   const [gameState, setGameState] = useState<GameState>({
     point: 0,
@@ -68,46 +81,70 @@ export default function App() {
     }, false);
   }
 
-  // Initialize AudioContext and load audio
+  // Initialize AudioContext once — shared across Home and all mini-games
   useEffect(() => {
+    const backgroundSound = sounds.background;
+
     const initAudio = async () => {
+      if (audioBufferRef.current && audioContextRef.current) {
+        if (audioOn) {
+          shouldBePlayingRef.current = true;
+          await unlockBackgroundAudio();
+        }
+        return;
+      }
+
       try {
-        // Create AudioContext
         audioContextRef.current = new (window.AudioContext ||
           (window as any).webkitAudioContext)();
 
-        // Create gain node for volume control
-        let tempBackgroundSound = sounds.background;
         gainNodeRef.current = audioContextRef.current.createGain();
-        gainNodeRef.current.gain.value = tempBackgroundSound.volume;
+        gainNodeRef.current.gain.value = backgroundSound.volume;
         gainNodeRef.current.connect(audioContextRef.current.destination);
 
-        // Load and decode audio file
-        const response = await fetch(tempBackgroundSound.path);
+        const response = await fetch(backgroundSound.path);
+        if (!response.ok) {
+          throw new Error(`Failed to load audio (${response.status})`);
+        }
+
         const arrayBuffer = await response.arrayBuffer();
         audioBufferRef.current = await audioContextRef.current.decodeAudioData(
           arrayBuffer
         );
 
-        controlAudio();
+        shouldBePlayingRef.current = audioOn;
+        if (audioOn) {
+          await unlockBackgroundAudio();
+        }
       } catch (error) {
         console.warn("Failed to initialize audio:", error);
       }
     };
-    
+
     initAudio();
 
-    // Cleanup on unmount
     return () => {
-      if (audioSourceRef.current) {
-        audioSourceRef.current.stop();
-        audioSourceRef.current.disconnect();
+      if (isPlayingRef.current) {
+        pauseTimeRef.current = getCurrentAudioPosition();
       }
+      if (audioSourceRef.current) {
+        try {
+          audioSourceRef.current.stop();
+        } catch {
+          // Source may already be stopped.
+        }
+        audioSourceRef.current.disconnect();
+        audioSourceRef.current = null;
+      }
+      isPlayingRef.current = false;
       if (audioContextRef.current) {
         audioContextRef.current.close();
+        audioContextRef.current = null;
       }
+      audioBufferRef.current = null;
+      gainNodeRef.current = null;
     };
-  }, [page]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Disable mobile browser zoom
   useEffect(() => {
@@ -228,6 +265,20 @@ export default function App() {
     }
   };
 
+  const unlockBackgroundAudio = async () => {
+    if (!audioOn) return;
+
+    shouldBePlayingRef.current = true;
+
+    if (!audioBufferRef.current || !audioContextRef.current || !gainNodeRef.current) {
+      return;
+    }
+
+    if (isPlayingRef.current) return;
+
+    await playAudio(1, pauseTimeRef.current > 0);
+  };
+
   // Function to change playback rate without restarting from beginning
   const changePlaybackRate = async (newRate: number) => {
     if (audioOn && audioBufferRef.current && shouldBePlayingRef.current) {
@@ -239,16 +290,22 @@ export default function App() {
   const controlAudio = () => {
     if (audioOn && audioBufferRef.current) {
       shouldBePlayingRef.current = true;
-      playAudio(1);
+      void unlockBackgroundAudio();
     } else {
       shouldBePlayingRef.current = false;
       pauseAudio();
     }
-  }; // eslint-disable-line react-hooks/exhaustive-deps
+  };
 
   useEffect(() => {
     controlAudio();
   }, [audioOn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isLoading) {
+      void unlockBackgroundAudio();
+    }
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check AudioContext state periodically and attempt to resume if needed
   useEffect(() => {
@@ -265,9 +322,7 @@ export default function App() {
           audioContextRef.current.state === "running" &&
           !isPlayingRef.current
         ) {
-          // AudioContext is running but audio isn't playing - restart it
-          console.log("Periodic check: Restarting audio playback");
-          playAudio(1);
+          void unlockBackgroundAudio();
         }
       }
     };
@@ -276,45 +331,26 @@ export default function App() {
     return () => clearInterval(interval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle iOS autoplay restrictions - resume audio on user interaction
+  // Handle autoplay restrictions — start/resume on any user interaction
   useEffect(() => {
-    const handleUserInteraction = async () => {
-      // Don't interfere if document is hidden
-      if (document.hidden) return;
-
-      if (
-        audioContextRef.current &&
-        audioContextRef.current.state === "suspended" &&
-        shouldBePlayingRef.current
-      ) {
-        try {
-          console.log("User interaction: Resuming suspended AudioContext");
-          await audioContextRef.current.resume();
-          if (shouldBePlayingRef.current && !isPlayingRef.current) {
-            playAudio(1);
-          }
-        } catch (error) {
-          console.warn("Failed to resume audio context:", error);
-        }
-      }
+    const handleUserInteraction = () => {
+      if (document.hidden || !audioOn) return;
+      void unlockBackgroundAudio();
     };
 
-    // Listen for various user interaction events
     const events = ["touchstart", "touchend", "mousedown", "keydown", "click"];
     events.forEach((event) => {
       document.addEventListener(event, handleUserInteraction, {
-        once: true,
         passive: true,
       });
     });
 
-    // Cleanup
     return () => {
       events.forEach((event) => {
         document.removeEventListener(event, handleUserInteraction);
       });
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [audioOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle background to foreground transition
   useEffect(() => {
@@ -358,8 +394,7 @@ export default function App() {
             audioContextRef.current.state === "running" &&
             !isPlayingRef.current
           ) {
-            console.log("Visibility handler: Restarting audio playback");
-            playAudio(1);
+            await unlockBackgroundAudio();
           }
         } catch (error) {
           console.warn("Failed to resume audio on visibility change:", error);
@@ -376,8 +411,12 @@ export default function App() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch user's highest score from API on component mount
-  const fetchGameState = async () => {
-    setIsLoading(true);
+  const fetchGameState = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setIsLoading(true);
+    }
+
     try {
       const response = await axios.get(
         "/3Care/GamifyPetGameState.do",
@@ -389,33 +428,30 @@ export default function App() {
       );
       if (response.data && response.data.code === 200) {
         setIsFirstEntry(response.data.firstEntry === "true");
-        setGameState({
-          point: response.data.point || 0,
-          satisfaction: response.data.satisfaction || 0,
-          petName: response.data.petName || "",
-          game1Complete: response.data.game1Complete === "true",
-          game1PlayTimes: response.data.game1PlayTimes || 0,
-          game1Timer: response.data.game1Timer || 0,
-          game2Complete: response.data.game2Complete === "true",
-          game2PlayTimes: response.data.game2PlayTimes || 0,
-          game2Timer: response.data.game2Timer || 0,
-          game3Complete: response.data.game3Complete === "true",
-          game3PlayTimes: response.data.game3PlayTimes || 0,
-          game3Timer: response.data.game3Timer || 0,
-          poopCount: response.data.poopCount || 0
-        });
+        const remote = parseGameStateFromApi(response.data);
+        setGameState((prev) =>
+          applyDailyResetIfNewDay(mergeFetchedGameState(prev, remote))
+        );
       } else {
         console.warn("API returned non-success code:", response.data);
-        //window.location.reload(); // Reload page if API fails
       }
     } catch (error) {
       console.error("Error fetching Game State:", error);
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
+      hasLoadedOnceRef.current = true;
     }
   };
 
-  const acquirePoint = async (gameName: string, point: number, satisfaction: number) => {
+  const acquirePoint = useCallback(async (
+    gameName: string,
+    point: number,
+    satisfaction: number
+  ) => {
+    setGameState((prev) => applyGameReward(prev, gameName, point, satisfaction));
+
     try {
       const response = await axios.get(
         "/3Care/GamifyPetGameAcquirePoint.do",
@@ -429,18 +465,18 @@ export default function App() {
         }
       );
       if (response.data && response.data.code === 200) {
-        setGameState({ ...gameState, point: response.data.totalPoint, satisfaction: response.data.satisfaction });
-
-        return true;
+        setGameState((prev) =>
+          mergeAcquirePointResponse(prev, response.data, gameName)
+        );
       } else {
         console.warn("API returned non-success code:", response.data);
-        //window.location.reload(); // Reload page if API fails
       }
     } catch (error) {
       console.error("Error acquirePoint:", error);
     }
-    return false;
-  };
+
+    return true;
+  }, []);
 
   const changeName = async (name: string) => {
     try {
@@ -467,11 +503,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchGameState();
-  }, []);
-
-  useEffect(() => {
-    fetchGameState();
+    fetchGameState({ silent: hasLoadedOnceRef.current });
   }, [page]);
 
   const handleFeedGame = () => {
@@ -490,16 +522,34 @@ export default function App() {
     setPage("home");
   };
 
+  const simulateNewDay = useCallback(() => {
+    setGameState((prev) => applyDailyReset(prev));
+  }, []);
+
+  const setDevSatisfaction = useCallback((value: number) => {
+    setGameState((prev) => ({
+      ...prev,
+      satisfaction: clampSatisfaction(value),
+    }));
+  }, []);
+
   if (isLoading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+      <div
+        className="appShell"
+        onPointerDown={() => void unlockBackgroundAudio()}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}
+      >
         <div className="loading-spinner" />
       </div>
     );
   }
 
   return (
-    <div id="root">
+    <div
+      className="appShell"
+      onPointerDown={() => void unlockBackgroundAudio()}
+    >
       {page === "home" && (
         <Home
           audioOn={audioOn} 
@@ -539,6 +589,14 @@ export default function App() {
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}
           acquirePoint={acquirePoint}
+        />
+      )}
+
+      {import.meta.env.DEV && page === "home" && (
+        <DevDebugPanel
+          gameState={gameState}
+          onSimulateNewDay={simulateNewDay}
+          onSetSatisfaction={setDevSatisfaction}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 .root {
     position: relative;
-    background-image: url('/3Care/chi/gamify/pet_game/images/spa_game_bg.png');
+    background-image: url('#{$asset-base}/images/spa_game_bg.png');
     background-size: cover;
     background-position: center;
     display: flex;
@@ -261,7 +261,7 @@
 
 .pointsModalDog {
     position: absolute;
-    top: 6px;
+    top: -32px;
     left: 50%;
     width: 128px;
     transform: translateX(-50%);
@@ -332,6 +332,76 @@
 }
 
 .pointsModalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.failModalWrap {
+    position: relative;
+    width: min(330px, 90%);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.failModalContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 30px 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.failModalTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    padding: 10px 0;
+}
+
+.failModalBtn {
+    position: relative;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 182px;
+    cursor: pointer;
+}
+
+.failModalBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.failModalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.failModalBtnSecondary {
+    position: relative;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 182px;
+    cursor: pointer;
+}
+
+.failModalBtnSecondaryText {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -533,6 +603,7 @@
     transform: translate(-50%, -50%);
     width: min(76%, 299px);
     height: min(38vh, 320px);
+    touch-action: manipulation;
 }
 
 .dogImage {
@@ -632,35 +703,46 @@
     -webkit-appearance: none;
     transform: translate(-50%, -50%);
     transition: opacity 0.2s ease;
-    z-index: 4;
+    z-index: 6;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.bubbleIdle {
+.bubbleIdle .bubbleImg {
     animation: bubblePulse 0.9s ease-in-out infinite;
 }
 
 .bubbleLarge {
     width: 24%;
     max-width: 72px;
+    min-width: 56px;
+    min-height: 56px;
 }
 
 .bubbleSmall {
     width: 11%;
     max-width: 34px;
+    min-width: 48px;
+    min-height: 48px;
 }
 
 .bubbleImg {
     width: 100%;
+    max-width: 100%;
     display: block;
     pointer-events: none;
+    transform: rotate(var(--bubble-rotation, 0deg));
+    transform-origin: center;
+}
+
+.bubbleShaking .bubbleImg {
+    animation: bubbleShake 0.55s ease-in-out;
 }
 
 .bubbleWeakened {
     opacity: 0.5;
-}
-
-.bubbleShaking {
-    animation: bubbleShake 0.55s ease-in-out;
 }
 
 .bubblePopping {
@@ -677,6 +759,7 @@
     width: 85%;
     max-width: 334px;
     z-index: 5;
+    pointer-events: none;
 }
 
 .cleaningBarFrame {
@@ -720,8 +803,8 @@
 }
 
 @keyframes bubblePulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.15); }
+    0%, 100% { transform: rotate(var(--bubble-rotation, 0deg)) scale(1); }
+    50% { transform: rotate(var(--bubble-rotation, 0deg)) scale(1.15); }
 }
 
 @keyframes blingTwinkle {
@@ -735,13 +818,13 @@
 }
 
 @keyframes bubbleShake {
-    0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-    12% { transform: translate(calc(-50% - 10px), calc(-50% - 3px)) rotate(-12deg) scale(1.06); }
-    28% { transform: translate(calc(-50% + 10px), calc(-50% + 3px)) rotate(12deg) scale(1.06); }
-    44% { transform: translate(calc(-50% - 8px), calc(-50% - 2px)) rotate(-10deg) scale(1.04); }
-    60% { transform: translate(calc(-50% + 8px), calc(-50% + 2px)) rotate(10deg) scale(1.04); }
-    76% { transform: translate(calc(-50% - 5px), -50%) rotate(-6deg) scale(1.02); }
-    88% { transform: translate(calc(-50% + 5px), -50%) rotate(6deg) scale(1.02); }
+    0%, 100% { transform: rotate(var(--bubble-rotation, 0deg)) scale(1); }
+    12% { transform: translate(-10px, -3px) rotate(calc(var(--bubble-rotation, 0deg) - 12deg)) scale(1.06); }
+    28% { transform: translate(10px, 3px) rotate(calc(var(--bubble-rotation, 0deg) + 12deg)) scale(1.06); }
+    44% { transform: translate(-8px, -2px) rotate(calc(var(--bubble-rotation, 0deg) - 10deg)) scale(1.04); }
+    60% { transform: translate(8px, 2px) rotate(calc(var(--bubble-rotation, 0deg) + 10deg)) scale(1.04); }
+    76% { transform: translate(-5px, 0) rotate(calc(var(--bubble-rotation, 0deg) - 6deg)) scale(1.02); }
+    88% { transform: translate(5px, 0) rotate(calc(var(--bubble-rotation, 0deg) + 6deg)) scale(1.02); }
 }
 
 @keyframes plusTextFadeMove {

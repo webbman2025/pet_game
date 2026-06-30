@@ -1,11 +1,424 @@
 .root {
     position: relative;
-    background-image: url('/3Care/chi/gamify/pet_game/images/walk_game_bg.png');
-    background-size: cover;
-    background-position: center;
     display: flex;
     flex-direction: column;
-    align-items: center;    
+    align-items: center;
+    flex: 1;
+    width: 100%;
+    min-height: 100%;
+    overflow: hidden;
+}
+
+.topOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 18%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.shake {
+    animation: walkShake 0.5s ease;
+}
+
+@keyframes walkShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+.canvasContainer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-height: 0;
+    z-index: 2;
+}
+
+.timeUpOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 28%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 8;
+    pointer-events: none;
+}
+
+.failOverlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 8;
+    pointer-events: none;
+}
+
+.timeUpTitle {
+    position: absolute;
+    top: 26%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    width: 90%;
+    font-size: clamp(32px, 12vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    text-align: center;
+    z-index: 18;
+    pointer-events: none;
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    text-shadow:
+        2px 0 0 #000,
+        -2px 0 0 #000,
+        0 2px 0 #000,
+        0 -2px 0 #000,
+        1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000;
+}
+
+.plus5Text {
+    position: absolute;
+    width: 120px;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 1s;
+}
+
+.showPlus5 {
+    opacity: 1;
+    animation: plusTextFadeMove 0.8s forwards;
+}
+
+@keyframes plusTextFadeMove {
+    0% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+    80% { opacity: 1; transform: translate(-50%, -50%) translateY(-20px); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-30px); }
+}
+
+.minusHeartText {
+    position: absolute;
+    width: 74px;
+    bottom: 17%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.showMinusHeart {
+    animation: minusHeartPop 0.9s forwards;
+}
+
+@keyframes minusHeartPop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+    10% {
+        opacity: 1;
+        transform: translate(calc(-50% - 5px), 2px);
+    }
+    20% {
+        transform: translate(calc(-50% + 5px), -4px);
+    }
+    30% {
+        transform: translate(calc(-50% - 4px), -10px);
+    }
+    40% {
+        transform: translate(calc(-50% + 4px), -16px);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(calc(-50% - 3px), -22px);
+    }
+    60% {
+        transform: translate(calc(-50% + 3px), -28px);
+        opacity: 0.9;
+    }
+    75% {
+        transform: translate(calc(-50% - 2px), -34px);
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -48px);
+    }
+}
+
+.failText {
+    position: absolute;
+    width: 110px;
+    top: 26%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9;
+    pointer-events: none;
+}
+
+.failModalWrap {
+    position: relative;
+    width: min(330px, 90%);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.failModalContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 30px 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.failModalTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    padding: 10px 0;
+}
+
+.failModalBtn {
+    position: relative;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 182px;
+    cursor: pointer;
+}
+
+.failModalBtnBg {
+    width: 100%;
+    display: block;
+}
+
+.failModalBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.failModalBtnSecondary {
+    position: relative;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 182px;
+    cursor: pointer;
+}
+
+.failModalBtnSecondaryText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+}
+
+.tutorialImage {
+    width: 100%;
+    max-width: 260px;
+    margin: 12px 0;
+}
+
+.tutorialOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+}
+
+.tutorialScreen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100%;
+}
+
+.tutorialModal {
+    position: relative;
+    width: min(352px, 90%);
+    touch-action: manipulation;
+}
+
+.tutorialFrame {
+    width: 100%;
+    display: block;
+    pointer-events: none;
+}
+
+.tutorialContent {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 72px 28px 48px;
+    overflow: visible;
+}
+
+.tutorialCarouselViewport {
+    width: 100%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.tutorialTrack {
+    display: flex;
+    width: 200%;
+    transition: transform 0.25s ease-out;
+}
+
+.tutorialSlide {
+    flex: 0 0 50%;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.tutorialTitle {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+
+.tutorialText {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.tutorialPreview {
+    width: 244px;
+    max-width: 100%;
+    height: auto;
+    min-height: 120px;
+    display: block;
+    object-fit: contain;
+}
+
+.tutorialCaption {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.2;
+    text-align: center;
+    min-height: 34px;
+}
+
+.tutorialCaptionSpacer {
+    margin: 0;
+    min-height: 34px;
+}
+
+.tutorialDots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 8px;
+    flex-shrink: 0;
+}
+
+.tutorialDot {
+    width: 8px;
+    height: 8px;
+    border: 0;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    background: #d3864e;
+    flex-shrink: 0;
+}
+
+.tutorialDotActive {
+    background: #612d16;
+}
+
+.tutorialBtn {
+    position: relative;
+    margin-top: 0;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: 145px;
+    cursor: pointer;
+    z-index: 2;
+    flex-shrink: 0;
+    touch-action: manipulation;
+}
+
+.tutorialBtnBg {
+    width: 100%;
+    display: block;
+    pointer-events: none;
+}
+
+.tutorialBtnText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -56%);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.modalPointTotal {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
 }
 
 .modalOverlay {
@@ -30,11 +443,34 @@
 
 .modalDog {
     position: absolute;
-    top: -20px;
+    top: -50px;
     left: 50%;
-    width: 75px;
+    width: min(128px, 42vw);
+    max-height: 120px;
+    object-fit: contain;
+    object-position: center top;
     transform: translateX(-50%);
-    z-index: 2;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.modalDogFriend {
+    width: min(190px, 56vw);
+    max-height: 100px;
+    object-fit: cover;
+    object-position: center 18%;
+}
+
+.modalDogBall {
+    width: min(120px, 38vw);
+    max-height: 110px;
+}
+
+.modalDogFood {
+    width: min(120px, 38vw);
+    max-height: 110px;
+    object-fit: cover;
+    object-position: center 14%;
 }
 
 .modalFrame {
@@ -43,7 +479,7 @@
     flex-direction: column;
     align-items: stretch;
     position: relative;
-    z-index: 3;
+    z-index: 1;
 }
 
 .modalTop,
@@ -134,15 +570,20 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    position: relative;
-    z-index: 2;
-    padding: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    padding: 10px 12px;
+    box-sizing: border-box;
 }
 
 .timerContainer {
     position: relative;
-    height: 40px;
-    width: 82px;
+    height: 56px;
+    width: 116px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -152,21 +593,24 @@
     width: 100%;
     height: 100%;
     position: absolute;
+    object-fit: contain;
+    object-position: left center;
 }
 
 .timerText {
     position: relative;
     z-index: 2;
-    font-size: 20px;
+    font-size: 22px;
     color: #fff;
     margin-top: 2px;
-    margin-right: 10px;
+    margin-right: 14px;
 }
 
 .pointContainer {
     position: relative;
-    height: 27px;
-    width: 71px;
+    height: 56px;
+    width: 106px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -176,37 +620,45 @@
     width: 100%;
     height: 100%;
     position: absolute;
+    object-fit: contain;
+    object-position: right center;
 }
 
 .pointText {
     position: relative;
     z-index: 2;
-    font-size: 20px;
+    font-size: 22px;
     color: #fff;
-    margin-right: 10px;
+    margin-right: 14px;
 }
 
 .heartContainer {
     position: relative;
-    width: 45%;
+    width: 38%;
+    max-width: 154px;
+    flex-shrink: 0;
     z-index: 2;
 }
 
 .heartBox {
     width: 100%;
+    height: auto;
+    max-height: 53px;
+    display: block;
 }
 
 .hearts {
     display: flex;
     position: absolute;
-    width: 100%;
-    top: 19%;
-    left: 12%;
-    gap: 4%;
+    width: 76%;
+    top: 24%;
+    left: 14%;
+    gap: 6%;
+    align-items: center;
 }
 
 .heart {
-    width: 23%;
+    width: 28%;
 }
 
 .petImage {
@@ -237,4 +689,223 @@
 
 .showFinishPetImage {
     opacity: 1;
+}
+
+.forkOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    touch-action: manipulation;
+}
+
+.forkOverlayChoice {
+    pointer-events: auto;
+}
+
+.forkOverlayWalking {
+    pointer-events: none;
+}
+
+.canvasForkChoice {
+    pointer-events: none;
+}
+
+.forkChoicePrompt {
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    width: 90%;
+    font-size: clamp(32px, 12vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    text-align: center;
+    z-index: 26;
+    pointer-events: none;
+    white-space: nowrap;
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    text-shadow:
+        0 2px 10px rgba(255, 255, 255, 0.8),
+        2px 0 0 #000,
+        -2px 0 0 #000,
+        0 2px 0 #000,
+        0 -2px 0 #000,
+        1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000;
+}
+
+@keyframes forkItemBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.forkLaneItemsBounce {
+    animation: forkItemBounce 0.75s ease-in-out infinite;
+}
+
+.forkRevealSlot {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: none;
+}
+
+@keyframes forkGiftShrinkOut {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.forkGiftShrink {
+    transform-origin: center;
+    animation: forkGiftShrinkOut 0.22s ease-in forwards;
+}
+
+@keyframes forkItemPopIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    55% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    75% {
+        transform: scale(0.92);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.forkItemPop {
+    transform-origin: center bottom;
+    animation: forkItemPopIn 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.forkItemAnchor {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.forkLaneHit {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 34%;
+    max-width: 130px;
+    height: 22%;
+    min-width: 96px;
+    min-height: 120px;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 27;
+}
+
+.forkLaneItems {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    pointer-events: none;
+}
+
+.forkFoodItem {
+    width: 56px;
+    height: auto;
+}
+
+.forkGiftBox {
+    width: 68px;
+    height: auto;
+}
+
+.forkBallItem {
+    width: 32px;
+    height: auto;
+}
+
+.forkFriendDog {
+    width: 58px;
+    height: auto;
+}
+
+.forkFriendHeart {
+    position: absolute;
+    top: -34px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: auto;
+    z-index: 2;
+}
+
+.bonusBanner {
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(82%, 320px);
+    height: auto;
+    z-index: 16;
+    pointer-events: none;
+}
+
+.finishBanner {
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    font-size: clamp(32px, 12vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    text-align: center;
+    z-index: 16;
+    pointer-events: none;
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    text-shadow:
+        2px 0 0 #000,
+        -2px 0 0 #000,
+        0 2px 0 #000,
+        0 -2px 0 #000,
+        1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000;
+}
+
+.modalBonusText {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e85a24;
+    text-align: center;
 }

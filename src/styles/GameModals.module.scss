@@ -1,0 +1,130 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.failModalWrap {
+  position: relative;
+  width: min(330px, 90%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.modalFrame {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+
+.modalTop,
+.modalBottom,
+.modalCenter {
+  width: 100%;
+  display: block;
+}
+
+.modalCenter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.modalCenterWrap {
+  position: relative;
+}
+
+.failModalContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 30px 24px;
+  position: relative;
+  z-index: 2;
+}
+
+.failModalTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.failModalBtn {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 182px;
+  cursor: pointer;
+}
+
+.failModalBtnBg {
+  width: 100%;
+  display: block;
+}
+
+.failModalBtnText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -56%);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.failModalBtnSecondary {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 182px;
+  cursor: pointer;
+}
+
+.failModalBtnSecondaryText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -56%);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.failOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 35%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0) 100%);
+  z-index: 8;
+  pointer-events: none;
+}
+
+.failText {
+  position: absolute;
+  width: 110px;
+  top: 26%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+}

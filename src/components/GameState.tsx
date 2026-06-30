@@ -12,4 +12,6 @@ export interface GameState {
   game3PlayTimes: number;
   game3Timer: number;
   poopCount: number;
+  /** YYYY-MM-DD — last daily reset (client or API). */
+  lastResetDate?: string;
 }

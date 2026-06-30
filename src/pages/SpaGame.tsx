@@ -1,6 +1,7 @@
 import styles from "@/styles/SpaGame.module.scss";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
+import GameRetryModal from "@/components/GameRetryModal";
 import { GameState } from "@/components/GameState";
 
 interface SpaGameProps {
@@ -129,6 +130,7 @@ const SpaGame: React.FC<SpaGameProps> = ({
   const [showPlus5, setShowPlus5] = useState(false);
   const [showStartModal, setShowStartModal] = useState(true);
   const [showEndModal, setShowEndModal] = useState(false);
+  const [showRetryModal, setShowRetryModal] = useState(false);
   const [dogSmiling, setDogSmiling] = useState(false);
   const lastResumeTimeRef = useRef<number>(Date.now());
   const totalBubblesRef = useRef(BUBBLE_TEMPLATE.length);
@@ -148,10 +150,10 @@ const SpaGame: React.FC<SpaGameProps> = ({
     }
 
     if (gameResult === "timeUp") {
-      const backTimer = setTimeout(() => onBackToMenu(), 1500);
-      return () => clearTimeout(backTimer);
+      const retryTimer = setTimeout(() => setShowRetryModal(true), 1500);
+      return () => clearTimeout(retryTimer);
     }
-  }, [isGameOver, gameResult, point, acquirePoint, onBackToMenu]);
+  }, [isGameOver, gameResult, point, acquirePoint]);
 
   useEffect(() => {
     if (showStartModal || isGameOver) return;
@@ -212,6 +214,27 @@ const SpaGame: React.FC<SpaGameProps> = ({
     setShowStartModal(false);
   };
 
+  const resetGame = () => {
+    hasSubmittedScoreRef.current = false;
+    setPoint(0);
+    setCleaningProgress(0);
+    setIsGameOver(false);
+    setIsWin(false);
+    setGameResult(null);
+    setTimer(GAME_DURATION);
+    setBubbles(generateRandomBubbles());
+    setPoppingIds([]);
+    setShakingIds([]);
+    setShowPlus5(false);
+    setShowRetryModal(false);
+    setDogSmiling(false);
+    lastResumeTimeRef.current = Date.now();
+  };
+
+  const handleRetry = () => {
+    resetGame();
+  };
+
   const removeBubble = (bubbleId: number) => {
     if (poppingIds.includes(bubbleId)) return;
 
@@ -231,7 +254,7 @@ const SpaGame: React.FC<SpaGameProps> = ({
     }, 150);
   };
 
-  const tapBubble = (bubbleId: number) => () => {
+  const tapBubble = (bubbleId: number) => {
     if (isGameOver || showStartModal || poppingIds.includes(bubbleId)) return;
 
     const bubble = bubbles.find((item) => item.id === bubbleId);
@@ -260,6 +283,14 @@ const SpaGame: React.FC<SpaGameProps> = ({
     removeBubble(bubbleId);
   };
 
+  const handleBubblePointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    bubbleId: number
+  ) => {
+    event.preventDefault();
+    tapBubble(bubbleId);
+  };
+
   const getBubbleSrc = (bubble: BubbleItem) => {
     if (bubble.size === "large") {
       return assets.ui.spaGameBubbleL;
@@ -271,7 +302,7 @@ const SpaGame: React.FC<SpaGameProps> = ({
 
   const showBubbles = !isGameOver || gameResult === "timeUp";
   const showFinishScreen = isGameOver && gameResult === "finish" && !showEndModal;
-  const showTimeUpScreen = isGameOver && gameResult === "timeUp" && !showEndModal;
+  const showTimeUpScreen = isGameOver && gameResult === "timeUp" && !showRetryModal;
   const dogImageSrc =
     showFinishScreen || (isGameOver && gameResult === "finish")
       ? assets.ui.spaGameDogClean
@@ -347,6 +378,20 @@ const SpaGame: React.FC<SpaGameProps> = ({
         </div>
       )}
 
+      {showRetryModal && (
+        <GameRetryModal
+          assets={{
+            modalTop: assets.ui.modalTop,
+            modalCenter: assets.ui.modalCenter,
+            modalButtom: assets.ui.modalButtom,
+            primaryBtn: assets.ui.primaryBtn,
+            secondaryBtn: assets.ui.secondaryBtn,
+          }}
+          onRetry={handleRetry}
+          onBack={onBackToMenu}
+        />
+      )}
+
       {showTimeUpScreen && (
         <>
           <div className={styles.timeUpOverlay} />
@@ -417,14 +462,14 @@ const SpaGame: React.FC<SpaGameProps> = ({
                   top: `${bubble.y}%`,
                   animationDelay: `${(bubble.id % 5) * 0.35}s`,
                 }}
-                onClick={tapBubble(bubble.id)}
+                onPointerDown={(event) => handleBubblePointerDown(event, bubble.id)}
                 aria-label="Pop bubble"
               >
                 <img
                   className={styles.bubbleImg}
                   src={getBubbleSrc(bubble)}
                   alt=""
-                  style={{ transform: `rotate(${bubble.rotation}deg)` }}
+                  style={{ ["--bubble-rotation" as string]: `${bubble.rotation}deg` }}
                 />
               </button>
             ))}

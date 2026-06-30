@@ -1,13 +1,26 @@
-const basePath = "/3Care/chi/gamify/pet_game";
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export const gameConfig = {
     basePath,
     campaignID: "pet_game",
 
+    // Game reward placeholders — tune when product spec is finalized.
+    rewards: {
+        feed: {
+            satisfactionPerCompletion: 5,
+        },
+        walk: {
+            satisfactionPerCompletion: 5,
+        },
+        spa: {
+            satisfactionPerCompletion: 5,
+        },
+    },
+
     sounds: {
         // Background music
         background: {
-            path: `${basePath}/sounds/background.mp3`,
+            path: `${basePath}/sounds/dogmusic.mp3`,
             volume: 0.5,
         },
 
@@ -64,6 +77,7 @@ export const gameConfig = {
             // UI images
             ui: {
                 primaryBtn: `${basePath}/images/primary_btn.png`,
+                secondaryBtn: `${basePath}/images/secondary_btn.png`,
                 modalTop: `${basePath}/images/modal_top.png`,
                 modalButtom: `${basePath}/images/modal_bottom.png`,
                 modalCenter: `${basePath}/images/modal_center.png`,
@@ -113,6 +127,41 @@ export const gameConfig = {
                 feedGameBeginDog: `${basePath}/images/feed_game_begin_dog.png`,
                 feedGamePlus10Text: `${basePath}/images/feed_game_plus_10_text.png`,
 
+                // Walk game (canvas engine still uses snowboard* keys; assets live in images/walk/)
+                walkGameBackground: `${basePath}/images/walk_game_bg.png`,
+                walkGameTokenFlight: `${basePath}/images/gamifyGame/token_flight.svg`,
+                walkGameTutorialFrame: `${basePath}/images/spa_game_tutorial_frame.png`,
+                walkGameTutorialPage1: `${basePath}/images/walk/walk_tutorial_page1.png`,
+                walkGameTutorialPage2: `${basePath}/images/walk/walk_tutorial_page2.png`,
+                walkGamePageDots1: `${basePath}/images/walk/walk_page_dots_1.png`,
+                walkGamePageDots2: `${basePath}/images/walk/walk_page_dots_2.png`,
+                snowboardBg: `${basePath}/images/walk/walk_bg_path.png`,
+                snowboardBgForkGrass: `${basePath}/images/walk/walk_bg_fork_grass.png`,
+                snowboardBgGrass: `${basePath}/images/walk/walk_bg_grass.png`,
+                snowboardCenter: `${basePath}/images/walk/walk_dog.png`,
+                snowboardLeft: `${basePath}/images/walk/walk_dog_left.png`,
+                snowboardRight: `${basePath}/images/walk/walk_dog_right.png`,
+                snowboardSupremeFlag: `${basePath}/images/walk/walk_finish.png`,
+                snowboardWater: `${basePath}/images/walk/walk_obstacle_water.png`,
+                snowboardTrap: `${basePath}/images/walk/walk_obstacle_poop.png`,
+                snowboardStick: `${basePath}/images/walk/walk_obstacle_stick.png`,
+                snowboardToken: `${basePath}/images/coin_icon.png`,
+                snowboardClock: `${basePath}/images/walk/walk_obstacle_clock2s.png`,
+                snowboardArrow: `${basePath}/images/snowboard/arrow.png`,
+                snowboardArrowRight: `${basePath}/images/snowboard/arrow.png`,
+                snowboardAdd5Point: `${basePath}/images/walk/walk_add5.png`,
+                snowboardMinusHeart: `${basePath}/images/walk/walk_minusHeart.png`,
+                snowboardTimesUp: `${basePath}/images/feed_game_tiemup_text.png`,
+                walkForkFood: `${basePath}/images/walk/walk_fork_food.png`,
+                walkForkBall: `${basePath}/images/walk/walk_fork_ball.png`,
+                walkForkFriend: `${basePath}/images/walk/walk_fork_friend.png`,
+                walkForkFriendHeart: `${basePath}/images/walk/walk_fork_friend_heart.png`,
+                walkForkGiftBox: `${basePath}/images/walk/game_walk_giftbox.png`,
+                walkBonusPointsText: `${basePath}/images/walk/walk_bonus_points_text.png`,
+                walkPointsModalFriend: `${basePath}/images/walk/walk_points_modal_friend.png`,
+                walkPointsModalBall: `${basePath}/images/walk/walk_points_modal_ball.png`,
+                walkPointsModalFood: `${basePath}/images/walk/walk_points_modal_food.png`,
+
                 // Spa game
                 spaGameBackground: `${basePath}/images/spa_game_bg.png`,
                 spaGameDog: `${basePath}/images/spa_game_dog.png`,
@@ -137,6 +186,7 @@ export const gameConfig = {
             // UI images
             ui: {
                 primaryBtn: `${basePath}/images/primary_btn.png`,
+                secondaryBtn: `${basePath}/images/secondary_btn.png`,
                 modalTop: `${basePath}/images/modal_top.png`,
                 modalButtom: `${basePath}/images/modal_bottom.png`,
                 modalCenter: `${basePath}/images/modal_center.png`,
@@ -185,6 +235,41 @@ export const gameConfig = {
                 feedGameFinishDog: `${basePath}/images/feed_game_finish_dog.png`,
                 feedGameBeginDog: `${basePath}/images/feed_game_begin_dog.png`,
                 feedGamePlus10Text: `${basePath}/images/feed_game_plus_10_text.png`,
+
+                // Walk game (canvas engine still uses snowboard* keys; assets live in images/walk/)
+                walkGameBackground: `${basePath}/images/walk_game_bg.png`,
+                walkGameTokenFlight: `${basePath}/images/gamifyGame/token_flight.svg`,
+                walkGameTutorialFrame: `${basePath}/images/spa_game_tutorial_frame.png`,
+                walkGameTutorialPage1: `${basePath}/images/walk/walk_tutorial_page1.png`,
+                walkGameTutorialPage2: `${basePath}/images/walk/walk_tutorial_page2.png`,
+                walkGamePageDots1: `${basePath}/images/walk/walk_page_dots_1.png`,
+                walkGamePageDots2: `${basePath}/images/walk/walk_page_dots_2.png`,
+                snowboardBg: `${basePath}/images/walk/walk_bg_path.png`,
+                snowboardBgForkGrass: `${basePath}/images/walk/walk_bg_fork_grass.png`,
+                snowboardBgGrass: `${basePath}/images/walk/walk_bg_grass.png`,
+                snowboardCenter: `${basePath}/images/walk/walk_dog.png`,
+                snowboardLeft: `${basePath}/images/walk/walk_dog_left.png`,
+                snowboardRight: `${basePath}/images/walk/walk_dog_right.png`,
+                snowboardSupremeFlag: `${basePath}/images/walk/walk_finish.png`,
+                snowboardWater: `${basePath}/images/walk/walk_obstacle_water.png`,
+                snowboardTrap: `${basePath}/images/walk/walk_obstacle_poop.png`,
+                snowboardStick: `${basePath}/images/walk/walk_obstacle_stick.png`,
+                snowboardToken: `${basePath}/images/coin_icon.png`,
+                snowboardClock: `${basePath}/images/walk/walk_obstacle_clock2s.png`,
+                snowboardArrow: `${basePath}/images/snowboard/arrow.png`,
+                snowboardArrowRight: `${basePath}/images/snowboard/arrow.png`,
+                snowboardAdd5Point: `${basePath}/images/walk/walk_add5.png`,
+                snowboardMinusHeart: `${basePath}/images/walk/walk_minusHeart.png`,
+                snowboardTimesUp: `${basePath}/images/feed_game_tiemup_text.png`,
+                walkForkFood: `${basePath}/images/walk/walk_fork_food.png`,
+                walkForkBall: `${basePath}/images/walk/walk_fork_ball.png`,
+                walkForkFriend: `${basePath}/images/walk/walk_fork_friend.png`,
+                walkForkFriendHeart: `${basePath}/images/walk/walk_fork_friend_heart.png`,
+                walkForkGiftBox: `${basePath}/images/walk/game_walk_giftbox.png`,
+                walkBonusPointsText: `${basePath}/images/walk/walk_bonus_points_text.png`,
+                walkPointsModalFriend: `${basePath}/images/walk/walk_points_modal_friend.png`,
+                walkPointsModalBall: `${basePath}/images/walk/walk_points_modal_ball.png`,
+                walkPointsModalFood: `${basePath}/images/walk/walk_points_modal_food.png`,
 
                 // Spa game
                 spaGameBackground: `${basePath}/images/spa_game_bg.png`,

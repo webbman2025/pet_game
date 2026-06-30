@@ -1,0 +1,107 @@
+.host {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toggleBtn,
+.panel,
+.closeBtn,
+.primaryBtn,
+.presetBtn {
+  pointer-events: auto;
+}
+
+.toggleBtn {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: rgba(20, 20, 30, 0.92);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.panel {
+  width: min(220px, calc(100vw - 24px));
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(20, 20, 30, 0.92);
+  color: #fff;
+  font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.closeBtn {
+  border: 0;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.section {
+  margin-top: 12px;
+}
+
+.label {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.primaryBtn {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #7151d2;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.presetBtn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: transparent;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.hint {
+  margin: 10px 0 0;
+  line-height: 1.35;
+  opacity: 0.75;
+}
