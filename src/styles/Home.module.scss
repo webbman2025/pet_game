@@ -625,35 +625,34 @@
 
 .gameTutorialModal {
   position: relative;
-  width: min(352px, 90%);
+  width: min(320px, 88%);
   touch-action: manipulation;
 }
 
 .gameTutorialFrame {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
   pointer-events: none;
-  object-fit: fill;
 }
 
 .gameTutorialContent {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
-  padding: 44px 28px 56px;
+  gap: 8px;
+  padding: 60px 26px 46px;
   overflow: hidden;
 }
 
 .gameTutorialCarouselViewport {
   width: 100%;
   overflow: hidden;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .gameTutorialTrack {
@@ -666,56 +665,54 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px;
+  gap: 10px;
+  padding: 0 8px;
   box-sizing: border-box;
 }
 
 .gameTutorialTitle {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1;
   text-align: center;
-  padding: 0 8px;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .gameTutorialText {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.2;
   text-align: center;
-  padding: 0 8px;
+}
+
+.gameTutorialTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   width: 100%;
-  box-sizing: border-box;
 }
 
 .gameTutorialPreview {
-  width: 200px;
+  width: 220px;
   max-width: 100%;
   height: auto;
   min-height: 0;
-  max-height: 18vh;
+  max-height: 150px;
   display: block;
   object-fit: contain;
 }
 
 .gameTutorialCaption {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.2;
   text-align: center;
-  min-height: 0;
-  padding: 0 8px;
-  width: 100%;
-  box-sizing: border-box;
+  min-height: 28px;
 }
 
 .gameTutorialCaptionSpacer {
   margin: 0;
-  min-height: 0;
+  min-height: 28px;
 }
 
 .gameTutorialDots {
@@ -723,7 +720,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 4px;
+  min-height: 8px;
   flex-shrink: 0;
 }
 
@@ -744,8 +741,7 @@
 
 .gameTutorialOkBtn {
   position: relative;
-  margin-top: 8px;
-  margin-bottom: 4px;
+  margin-top: auto;
   border: 0;
   background: transparent;
   padding: 0;

@@ -445,11 +445,13 @@ const Home: React.FC<HomeProps> = ({
                     >
                       <h2 className={styles.gameTutorialTitle}>{page.title}</h2>
                       {page.lines ? (
-                        page.lines.map((line) => (
-                          <p key={line} className={styles.gameTutorialText}>
-                            {line}
-                          </p>
-                        ))
+                        <div className={styles.gameTutorialTextGroup}>
+                          {page.lines.map((line) => (
+                            <p key={line} className={styles.gameTutorialText}>
+                              {line}
+                            </p>
+                          ))}
+                        </div>
                       ) : (
                         <p className={styles.gameTutorialText}>{page.body}</p>
                       )}
