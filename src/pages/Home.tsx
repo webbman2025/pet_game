@@ -2,6 +2,7 @@ import styles from "@/styles/Home.module.scss";
 import { gameConfig } from "@/config/gameConfig";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatNumberWithCommas } from "@/utils/index";
+import { readGameScores, getTotalPoints } from "@/utils/pointsLedger";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import { GameState } from "@/components/GameState";
 import {
@@ -40,8 +41,10 @@ interface HomeProps {
   onSpa: () => void;
   gameState: GameState;
   setGameState: (gameState: GameState) => void;
+  pointsRevision: number;
+  awardPoints: (amount: number) => void;
   changeName: (name: string) => Promise<boolean>;
-  acquirePoint: (gameName: string, point: number, satisfaction: number) => Promise<boolean>;
+  acquirePoint: (gameName: string, point: number, satisfaction: number, bonusPoint?: number) => Promise<boolean>;
   isFirstEntry: boolean;
   onBackToMenu: () => void;
 }
@@ -64,6 +67,8 @@ const Home: React.FC<HomeProps> = ({
   onSpa,
   gameState,
   setGameState,
+  pointsRevision,
+  awardPoints,
   changeName,
   acquirePoint,
   isFirstEntry,
@@ -332,6 +337,14 @@ const Home: React.FC<HomeProps> = ({
     [satisfactionLevel, assets.ui]
   );
 
+  const [totalPoints, setTotalPoints] = useState(0);
+
+  useEffect(() => {
+    const scores = readGameScores();
+    console.log("Scores object:", scores);
+    setTotalPoints(getTotalPoints(scores));
+  }, [pointsRevision]);
+
   const feedTaskComplete =
     gameState.game1PlayTimes >= DAILY_TASK_TARGETS.feed;
   const walkTaskComplete =
@@ -356,7 +369,11 @@ const Home: React.FC<HomeProps> = ({
       );
       if (response.data && response.data.code === 200) {
         setPoopPositions((prev) => prev.filter((poop) => poop.id !== poopId));
-        setGameState({ ...gameState, point: gameState.point + 20, poopCount: Math.max(0, gameState.poopCount - 1) });
+        awardPoints(20);
+        setGameState({
+          ...gameStateRef.current,
+          poopCount: Math.max(0, gameStateRef.current.poopCount - 1),
+        });
         setShowEndModal(true);
         console.log("Poop removed successfully:", response.data);
       } else {
@@ -386,7 +403,9 @@ const Home: React.FC<HomeProps> = ({
                     +20
                   </p>
                   <p className={styles.modalText}>Total Points</p>
-                  <p className={styles.modalText}>{gameStateRef.current.point}</p>
+                  <p className={styles.modalText}>
+                    {formatNumberWithCommas(totalPoints)}
+                  </p>
 
                   <button
                     className={styles.modalBtn}
@@ -553,8 +572,8 @@ const Home: React.FC<HomeProps> = ({
         <div className={styles.pointsContainer}>
           <img src={assets.ui.coinIcon} className={styles.coinIcon}/>
           <div>
-            <div className={styles.pointsValue}>
-              {formatNumberWithCommas(gameState.point)}
+            <div className={styles.pointsValue} id="homepagePoints">
+              {formatNumberWithCommas(totalPoints)}
             </div>
             <div className={styles.pointsLabel}>points</div>
           </div>

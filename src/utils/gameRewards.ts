@@ -6,6 +6,9 @@ import {
 
 type AcquirePointApiData = {
   totalPoint?: number;
+  point?: number;
+  bonusPoint?: number;
+  bonus?: number;
   satisfaction?: number;
   game1PlayTimes?: number;
   game1Timer?: number;
@@ -68,17 +71,41 @@ export const applyGameReward = (
   return next;
 };
 
+const parseApiTotalPoint = (data: AcquirePointApiData): number | null => {
+  if (data.totalPoint == null) return null;
+  const parsed = Number(data.totalPoint);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const parseApiBonus = (data: AcquirePointApiData): number => {
+  const raw = data.bonusPoint ?? data.bonus;
+  if (raw == null) return 0;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const mergeAcquirePointResponse = (
   prev: GameState,
   data: AcquirePointApiData,
-  gameName: string
+  gameName: string,
+  expectedMinimumPoint?: number
 ): GameState => {
+  const apiTotal = parseApiTotalPoint(data);
+  const apiBonus = parseApiBonus(data);
+  let mergedPoint = Math.max(prev.point, expectedMinimumPoint ?? 0);
+
+  // Only treat totalPoint as authoritative cumulative server total.
+  // The `point` field alone is often session-earned points, not lifetime total.
+  if (apiTotal != null) {
+    mergedPoint = Math.max(mergedPoint, apiTotal);
+    if (apiBonus > 0) {
+      mergedPoint = Math.max(mergedPoint, apiTotal + apiBonus);
+    }
+  }
+
   const next: GameState = {
     ...prev,
-    point:
-      data.totalPoint != null
-        ? Math.max(prev.point, data.totalPoint)
-        : prev.point,
+    point: mergedPoint,
     satisfaction:
       data.satisfaction != null
         ? Math.max(prev.satisfaction, data.satisfaction)
@@ -134,7 +161,11 @@ export const mergeAcquirePointResponse = (
 };
 
 export const parseGameStateFromApi = (data: Record<string, unknown>): GameState => ({
-  point: Number(data.point) || 0,
+  // `point` from the API is often session-earned only; prefer explicit totalPoint.
+  point:
+    data.totalPoint != null
+      ? Number(data.totalPoint) || 0
+      : 0,
   satisfaction: Number(data.satisfaction) || 0,
   petName: String(data.petName ?? ""),
   game1Complete: data.game1Complete === "true",
@@ -154,14 +185,15 @@ export const parseGameStateFromApi = (data: Record<string, unknown>): GameState 
 /** Prefer fresher local progress when refetch races with a just-finished mini-game. */
 export const mergeFetchedGameState = (
   local: GameState,
-  remote: GameState
+  remote: GameState,
+  localPointsFloor = 0
 ): GameState => {
   const useLocalGame1 = local.game1PlayTimes > remote.game1PlayTimes;
   const useLocalGame2 = local.game2PlayTimes > remote.game2PlayTimes;
   const useLocalGame3 = local.game3PlayTimes > remote.game3PlayTimes;
 
   return {
-    point: Math.max(local.point, remote.point),
+    point: Math.max(local.point, remote.point, localPointsFloor),
     satisfaction: Math.max(local.satisfaction, remote.satisfaction),
     petName: remote.petName || local.petName,
     poopCount: remote.poopCount ?? local.poopCount,

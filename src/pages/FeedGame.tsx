@@ -2,6 +2,7 @@ import styles from "@/styles/FeedGame.module.scss";
 import { gameConfig } from "@/config/gameConfig";
 import { useEffect, useRef, useState } from "react";
 import { formatNumberWithCommas } from "@/utils/index";
+import { getTotalPoints, readGameScores } from "@/utils/pointsLedger";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import { GameState } from "@/components/GameState";
 import GameRetryModal from "@/components/GameRetryModal";
@@ -12,7 +13,7 @@ interface FeedGameProps {
   setAudioOn: (audioOn: boolean) => void;
   gameState: GameState;
   onBackToMenu: () => void;
-  acquirePoint: (name: string, point: number, satisfaction: number) => Promise<boolean>;
+  acquirePoint: (name: string, point: number, satisfaction: number, bonusPoint?: number) => Promise<boolean>;
 }
 
 type GameResult = "finish" | "fail" | null;
@@ -272,8 +273,8 @@ const FeedGame: React.FC<FeedGameProps> = ({
                   <p className={styles.modalText}>
                     {formatNumberWithCommas(
                       pointsAwarded
-                        ? gameStateRef.current.point
-                        : gameStateRef.current.point + point
+                        ? getTotalPoints(readGameScores())
+                        : getTotalPoints(readGameScores()) + point
                     )}
                   </p>
 

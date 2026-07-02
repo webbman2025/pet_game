@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import Home from "@/pages/Home";
 import FeedGame from "@/pages/FeedGame";
@@ -20,6 +20,11 @@ import {
   applyDailyResetIfNewDay,
 } from "@/utils/dailyReset";
 import { clampSatisfaction } from "@/utils/satisfaction";
+import {
+  getTotalPoints,
+  readGameScores,
+  recordGameScore,
+} from "@/utils/pointsLedger";
 import DevDebugPanel from "@/components/DevDebugPanel";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import "@/styles/global.scss";
@@ -35,9 +40,16 @@ export default function App() {
   const [isFirstEntry, setIsFirstEntry] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const hasLoadedOnceRef = useRef(false);
+  const [pointsRevision, setPointsRevision] = useState(0);
 
-  const [gameState, setGameState] = useState<GameState>({
-    point: 0,
+  const bumpPoints = useCallback(() => {
+    setPointsRevision((revision) => revision + 1);
+  }, []);
+
+  const totalPoints = useMemo(() => getTotalPoints(readGameScores()), [pointsRevision]);
+
+  const [gameState, setGameState] = useState<GameState>(() => ({
+    point: totalPoints,
     satisfaction: 100,
     petName: "",
     game1Complete: false,
@@ -50,8 +62,7 @@ export default function App() {
     game3PlayTimes: 0,
     game3Timer: 0,
     poopCount: 0
-  });
-
+  }));
 
   // Audio Context setup with useRef to persist across renders
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -429,9 +440,18 @@ export default function App() {
       if (response.data && response.data.code === 200) {
         setIsFirstEntry(response.data.firstEntry === "true");
         const remote = parseGameStateFromApi(response.data);
-        setGameState((prev) =>
-          applyDailyResetIfNewDay(mergeFetchedGameState(prev, remote))
-        );
+        const hasAuthoritativeTotal = response.data.totalPoint != null;
+        setGameState((prev) => {
+          const floor = getTotalPoints(readGameScores());
+          const merged = applyDailyResetIfNewDay(
+            mergeFetchedGameState(prev, remote, floor)
+          );
+          const point = hasAuthoritativeTotal
+            ? Math.max(getTotalPoints(readGameScores()), merged.point, remote.point, floor)
+            : Math.max(getTotalPoints(readGameScores()), merged.point, floor);
+          bumpPoints();
+          return { ...merged, point };
+        });
       } else {
         console.warn("API returned non-success code:", response.data);
       }
@@ -448,9 +468,18 @@ export default function App() {
   const acquirePoint = useCallback(async (
     gameName: string,
     point: number,
-    satisfaction: number
-  ) => {
-    setGameState((prev) => applyGameReward(prev, gameName, point, satisfaction));
+    satisfaction: number,
+    bonusPoint = 0
+  ): Promise<boolean> => {
+    const pointsEarned = point + bonusPoint;
+    recordGameScore(gameName, pointsEarned);
+    const newTotal = getTotalPoints();
+    bumpPoints();
+
+    setGameState((prev) => {
+      const rewarded = applyGameReward(prev, gameName, pointsEarned, satisfaction);
+      return { ...rewarded, point: newTotal };
+    });
 
     try {
       const response = await axios.get(
@@ -459,23 +488,42 @@ export default function App() {
           params: {
             campaignID: gameConfig.campaignID,
             name: gameName,
-            point: point,
-            satisfaction: satisfaction
+            point: bonusPoint > 0 ? point : pointsEarned,
+            satisfaction: satisfaction,
+            ...(bonusPoint > 0 ? { bonus: bonusPoint } : {}),
           },
         }
       );
       if (response.data && response.data.code === 200) {
-        setGameState((prev) =>
-          mergeAcquirePointResponse(prev, response.data, gameName)
-        );
-      } else {
-        console.warn("API returned non-success code:", response.data);
+        setGameState((prev) => {
+          const merged = mergeAcquirePointResponse(
+            prev,
+            response.data,
+            gameName,
+            newTotal
+          );
+          const ledgerTotal = getTotalPoints(readGameScores());
+          bumpPoints();
+          return { ...merged, point: ledgerTotal };
+        });
+        return true;
       }
+
+      console.warn("API returned non-success code:", response.data);
     } catch (error) {
       console.error("Error acquirePoint:", error);
     }
 
     return true;
+  }, [bumpPoints]);
+
+  const awardPoints = useCallback((_amount: number) => {
+    bumpPoints();
+    setGameState((prev) => ({ ...prev, point: getTotalPoints(readGameScores()) }));
+  }, [bumpPoints]);
+
+  const setGameStateFromHome = useCallback((next: GameState) => {
+    setGameState({ ...next, point: getTotalPoints(readGameScores()) });
   }, []);
 
   const changeName = async (name: string) => {
@@ -503,8 +551,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchGameState({ silent: hasLoadedOnceRef.current });
-  }, [page]);
+    fetchGameState();
+  }, []);
 
   const handleFeedGame = () => {
     setPage("feedGame");
@@ -519,6 +567,9 @@ export default function App() {
   };
 
   const handleBackToMenu = () => {
+    const ledgerTotal = getTotalPoints(readGameScores());
+    bumpPoints();
+    setGameState((prev) => ({ ...prev, point: ledgerTotal }));
     setPage("home");
   };
 
@@ -532,6 +583,11 @@ export default function App() {
       satisfaction: clampSatisfaction(value),
     }));
   }, []);
+
+  const displayGameState: GameState = {
+    ...gameState,
+    point: totalPoints,
+  };
 
   if (isLoading) {
     return (
@@ -550,24 +606,29 @@ export default function App() {
       className="appShell"
       onPointerDown={() => void unlockBackgroundAudio()}
     >
-      {page === "home" && (
+      <div
+        style={{ display: page === "home" ? "block" : "none" }}
+        aria-hidden={page !== "home"}
+      >
         <Home
-          audioOn={audioOn} 
+          audioOn={audioOn}
           setAudioOn={setAudioOn}
           onFeed={handleFeedGame}
           onWalk={handleWalkGame}
           onSpa={handleSpaGame}
-          gameState={gameState}
-          setGameState={setGameState}
+          gameState={displayGameState}
+          setGameState={setGameStateFromHome}
+          pointsRevision={pointsRevision}
+          awardPoints={awardPoints}
           changeName={changeName}
           acquirePoint={acquirePoint}
           isFirstEntry={isFirstEntry}
           onBackToMenu={handleBackToMenu}
         />
-      )}
+      </div>
       {page === "feedGame" && (
         <FeedGame
-          gameState={gameState}
+          gameState={displayGameState}
           audioOn={audioOn}
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}
@@ -576,7 +637,7 @@ export default function App() {
       )}
       {page === "walkGame" && (
         <WalkGame
-          gameState={gameState}
+          gameState={displayGameState}
           audioOn={audioOn}
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}
@@ -585,7 +646,7 @@ export default function App() {
       )}
       {page === "spaGame" && (
         <SpaGame
-          gameState={gameState}
+          gameState={displayGameState}
           audioOn={audioOn}
           setAudioOn={setAudioOn}
           onBackToMenu={handleBackToMenu}

@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { useLanguage, getLangAssets } from "@/hooks/useLanguage";
 import GameRetryModal from "@/components/GameRetryModal";
 import { GameState } from "@/components/GameState";
+import { getTotalPoints, readGameScores } from "@/utils/pointsLedger";
 
 interface SpaGameProps {
   audioOn: boolean;
   setAudioOn: (audioOn: boolean) => void;
   gameState: GameState;
   onBackToMenu: () => void;
-  acquirePoint: (name: string, point: number, satisfaction: number) => void;
+  acquirePoint: (name: string, point: number, satisfaction: number, bonusPoint?: number) => Promise<boolean>;
 }
 
 type BubbleSize = "large" | "small";
@@ -131,12 +132,15 @@ const SpaGame: React.FC<SpaGameProps> = ({
   const [showStartModal, setShowStartModal] = useState(true);
   const [showEndModal, setShowEndModal] = useState(false);
   const [showRetryModal, setShowRetryModal] = useState(false);
+  const [pointsAwarded, setPointsAwarded] = useState(false);
   const [dogSmiling, setDogSmiling] = useState(false);
   const lastResumeTimeRef = useRef<number>(Date.now());
   const totalBubblesRef = useRef(BUBBLE_TEMPLATE.length);
   const bubblesRef = useRef(bubbles);
   const hasSubmittedScoreRef = useRef(false);
+  const gameStateRef = useRef(gameState);
   bubblesRef.current = bubbles;
+  gameStateRef.current = gameState;
 
   useEffect(() => {
     if (!isGameOver || hasSubmittedScoreRef.current) return;
@@ -144,9 +148,23 @@ const SpaGame: React.FC<SpaGameProps> = ({
     hasSubmittedScoreRef.current = true;
 
     if (gameResult === "finish") {
-      acquirePoint("spa_game", point, 5);
-      const modalTimer = setTimeout(() => setShowEndModal(true), 2000);
-      return () => clearTimeout(modalTimer);
+      let cancelled = false;
+
+      const awardPoints = async () => {
+        await acquirePoint("spa_game", point, 5);
+        if (!cancelled) {
+          setPointsAwarded(true);
+        }
+        if (!cancelled) {
+          setTimeout(() => setShowEndModal(true), 2000);
+        }
+      };
+
+      void awardPoints();
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (gameResult === "timeUp") {
@@ -226,7 +244,9 @@ const SpaGame: React.FC<SpaGameProps> = ({
     setPoppingIds([]);
     setShakingIds([]);
     setShowPlus5(false);
+    setShowEndModal(false);
     setShowRetryModal(false);
+    setPointsAwarded(false);
     setDogSmiling(false);
     lastResumeTimeRef.current = Date.now();
   };
@@ -309,7 +329,9 @@ const SpaGame: React.FC<SpaGameProps> = ({
       : dogSmiling
         ? assets.ui.spaGameDogSmile
         : assets.ui.spaGameDog;
-  const totalPoints = gameState.point + point;
+  const totalPoints = pointsAwarded
+    ? getTotalPoints(readGameScores())
+    : getTotalPoints(readGameScores()) + point;
 
   return (
     <div className={styles.root}>

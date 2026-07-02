@@ -17,13 +17,14 @@ import {
   ForkRevealPhase,
   isFriendBonusPick,
 } from "@/utils/walkFork";
+import { getTotalPoints, readGameScores } from "@/utils/pointsLedger";
 
 interface WalkGameProps {
   audioOn: boolean;
   setAudioOn: (audioOn: boolean) => void;
   gameState: GameState;
   onBackToMenu: () => void;
-  acquirePoint: (name: string, point: number, satisfaction: number) => void;
+  acquirePoint: (name: string, point: number, satisfaction: number, bonusPoint?: number) => Promise<boolean>;
 }
 
 const TUTORIAL_PAGES = [
@@ -78,8 +79,10 @@ const WalkGame: React.FC<WalkGameProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<SnowboardEngine | null>(null);
   const hasSubmittedScoreRef = useRef(false);
+  const gameStateRef = useRef(gameState);
   const acquirePointRef = useRef(acquirePoint);
   acquirePointRef.current = acquirePoint;
+  gameStateRef.current = gameState;
   const swipeStartXRef = useRef<number | null>(null);
   const forkSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const pendingStartRef = useRef(false);
@@ -100,6 +103,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
   const [showStartModal, setShowStartModal] = useState(true);
   const [showEndModal, setShowEndModal] = useState(false);
   const [showRetryModal, setShowRetryModal] = useState(false);
+  const [pointsAwarded, setPointsAwarded] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [gameResult, setGameResult] = useState<GameResult>(null);
   const [showTimeUpScreen, setShowTimeUpScreen] = useState(false);
@@ -179,6 +183,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
           setPoint(score);
           setForkLayout(layout);
           setShowForkScreen(true);
+          setShowForkChoiceHint(true);
           setShowTimeUpScreen(false);
           setIsFinishRush(false);
         },
@@ -186,15 +191,12 @@ const WalkGame: React.FC<WalkGameProps> = ({
           handleForkPickRef.current(lane);
         },
         onGameEnd: (score, reason) => {
+          if (reason === "finish") return;
+
           if (hasSubmittedScoreRef.current) return;
           hasSubmittedScoreRef.current = true;
           setIsGameOver(true);
           setGameResult(reason);
-
-          if (reason === "finish") {
-            return;
-          }
-
           setTimeout(() => setShowRetryModal(true), 1500);
         },
         onShake: () => {
@@ -286,7 +288,11 @@ const WalkGame: React.FC<WalkGameProps> = ({
     setForkRevealPhase(null);
   };
 
-  const finishWalkWithReward = (modalItem: ForkItem, baseScore: number, bonus: number) => {
+  const finishWalkWithReward = async (
+    modalItem: ForkItem,
+    baseScore: number,
+    bonus: number
+  ) => {
     if (hasSubmittedScoreRef.current) return;
     hasSubmittedScoreRef.current = true;
 
@@ -297,7 +303,8 @@ const WalkGame: React.FC<WalkGameProps> = ({
     setIsGameOver(true);
     setGameResult("finish");
     setShowTimeUpScreen(false);
-    acquirePointRef.current("walk_game", totalEarned, 5);
+    await acquirePointRef.current("walk_game", baseScore, 5, bonus);
+    setPointsAwarded(true);
     engineRef.current?.markWalkComplete();
     setShowEndModal(true);
   };
@@ -373,6 +380,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
     setGameResult(null);
     setShowEndModal(false);
     setShowRetryModal(false);
+    setPointsAwarded(false);
     setShowTimeUpScreen(false);
     setShowPlus5(false);
     setShowMinusHeart(false);
@@ -392,6 +400,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
     setGameResult(null);
     setShowEndModal(false);
     setShowRetryModal(false);
+    setPointsAwarded(false);
     setShowTimeUpScreen(false);
     setShowPlus5(false);
     setShowMinusHeart(false);
@@ -449,7 +458,9 @@ const WalkGame: React.FC<WalkGameProps> = ({
     }
   };
 
-  const totalPoints = gameState.point + earnedTotal;
+  const totalPoints = pointsAwarded
+    ? getTotalPoints(readGameScores())
+    : getTotalPoints(readGameScores()) + earnedTotal;
   const showFailScreen = isGameOver && gameResult === "fail" && !showRetryModal;
   const showTimeUpBlack = showTimeUpScreen && !showFailScreen && !showForkScreen && !isFinishRush;
   const showTimeUpText = showTimeUpScreen && !showFailScreen && !showForkScreen;
@@ -764,7 +775,7 @@ const WalkGame: React.FC<WalkGameProps> = ({
             handleForkSwipeEnd(event.clientX, event.clientY);
           }}
         >
-          {showForkChoiceHint && (
+          {forkChoiceActive && (
             <p className={styles.forkChoicePrompt}>
               Swipe ← ↑ →
               <br />
