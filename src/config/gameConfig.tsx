@@ -4,6 +4,9 @@ export const gameConfig = {
     basePath,
     campaignID: "pet_game",
 
+    /** Enforce on server (GamifyPetGameAcquirePoint.do / GamifyPetGameState.do) — not shown in UI. */
+    backendMaxTotalPoints: 9_999_999_999,
+
     // Game reward placeholders — tune when product spec is finalized.
     rewards: {
         feed: {

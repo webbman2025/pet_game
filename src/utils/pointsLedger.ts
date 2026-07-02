@@ -1,3 +1,5 @@
+import { gameConfig } from "@/config/gameConfig";
+
 /** Known score keys — extend this list when adding new mini-games. */
 export const CORE_GAME_SCORE_KEYS = [
   "feedPoints",
@@ -13,6 +15,11 @@ export type GameName = "feed_game" | "walk_game" | "spa_game";
 export type GameScores = Record<string, number>;
 
 const SCORES_STORAGE_KEY = "pet_game_scores";
+
+const MAX_TOTAL_POINTS = gameConfig.backendMaxTotalPoints;
+
+export const clampTotalPoints = (points: number): number =>
+  Math.min(Math.max(0, Math.floor(points)), MAX_TOTAL_POINTS);
 
 const EMPTY_SCORES: GameScores = {
   feedPoints: 0,
@@ -128,9 +135,13 @@ export const recordGameScore = (
   console.log(key, safeEarned);
 
   const scores = hydrateScores();
+  const currentTotal = sumGameScores(scores);
+  const headroom = Math.max(0, MAX_TOTAL_POINTS - currentTotal);
+  const appliedEarned = Math.min(safeEarned, headroom);
+
   const next: GameScores = {
     ...scores,
-    [key]: (scores[key] ?? 0) + safeEarned,
+    [key]: (scores[key] ?? 0) + appliedEarned,
   };
   writeGameScores(next);
   return next;
@@ -147,9 +158,11 @@ export const getScoreKeys = (scores: GameScores = readGameScores()): string[] =>
  * Future-proof: new game keys are included automatically.
  */
 export const sumGameScores = (scores: GameScores = readGameScores()): number =>
-  Object.values(scores).reduce(
-    (sum, value) => sum + (Number.isFinite(value) && value >= 0 ? value : 0),
-    0
+  clampTotalPoints(
+    Object.values(scores).reduce(
+      (sum, value) => sum + (Number.isFinite(value) && value >= 0 ? value : 0),
+      0
+    )
   );
 
 /** @alias sumGameScores */
@@ -164,5 +177,5 @@ export const syncTotalPointsFloor = (candidateTotal: number): number => {
   if (!Number.isFinite(candidateTotal) || candidateTotal < 0) {
     return currentTotal;
   }
-  return Math.max(currentTotal, candidateTotal);
+  return clampTotalPoints(Math.max(currentTotal, candidateTotal));
 };
