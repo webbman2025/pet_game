@@ -1,11 +1,15 @@
 .root {
   position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background-image: url('#{$asset-base}/images/home_bg.png');
   background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: clamp(4px, 1vh, 10px);
 }
 
 .backgroundImage {
@@ -144,10 +148,10 @@
   width: 100%;
   padding: 16px 20px;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   position: relative;
   z-index: 2;
-  flex: 3;
+  flex: 0 0 auto;
 }
 
 // Pet Name - Top Left
@@ -268,7 +272,7 @@
   position: relative;
   z-index: 2;
   align-self: center;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .satisfactionLabel {
@@ -315,21 +319,27 @@
   align-items: end;
   justify-content: center;
   width: 100%;
-  margin: 10px 0;
+  margin: 0;
   position: relative;
   z-index: 2;
-  flex: 5;
-  min-height: 280px;
+  flex: 1 1 auto;
+  min-height: clamp(200px, 36vh, 280px);
 }
 
 .petImage {
-  max-height: 250px;
+  height: clamp(240px, 44vh, 300px);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
   position: relative;
   z-index: 2;
 }
 
 .petImageUnhappy {
-  max-height: 120px;
+  height: clamp(110px, 24vh, 140px);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
   position: relative;
   z-index: 2;
 }
@@ -397,10 +407,11 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin: 10px 0;
+  margin: 0;
   position: relative;
   z-index: 2;
-  flex: 1;
+  flex: 0 0 auto;
+  padding-top: clamp(18px, 3vh, 28px);
 }
 
 .gameButtonsRow {
@@ -495,12 +506,13 @@
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
   border-bottom: none;
-  padding: 0 16px;
+  padding: 0 16px 8px;
   margin: 0 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 2;
-  flex: 1;  
+  flex: 0 0 auto;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
 .purpleLine {
@@ -796,5 +808,127 @@
 
   .pointsContainer {
     padding: 6px 10px;
+  }
+}
+
+@media (max-height: 780px) {
+  .topBar {
+    padding-top: 10px;
+    padding-bottom: 8px;
+  }
+
+  .satisfactionBar {
+    height: 30px;
+    padding: 5px 6px;
+  }
+
+  .satisfactionLabel {
+    font-size: 14px !important;
+  }
+
+  .petImage {
+    height: clamp(210px, 40vh, 260px);
+  }
+
+  .petImageUnhappy {
+    height: clamp(95px, 22vh, 120px);
+  }
+
+  .purpleLine {
+    margin: 10px;
+  }
+
+  .dailyTasksTitle {
+    margin-bottom: 8px !important;
+    font-size: 15px !important;
+  }
+
+  .taskLabel {
+    font-size: 14px;
+  }
+
+  .taskItem {
+    margin-bottom: 4px;
+  }
+}
+
+@media (max-height: 680px) {
+  .topBar {
+    padding-top: 8px;
+    padding-bottom: 6px;
+  }
+
+  .petName {
+    font-size: 16px !important;
+    padding: 6px 10px;
+  }
+
+  .pointsValue {
+    font-size: 18px !important;
+  }
+
+  .pointsLabel {
+    font-size: 13px !important;
+  }
+
+  .satisfactionContainer {
+    gap: 4px;
+  }
+
+  .satisfactionBar {
+    height: 28px;
+  }
+
+  .petImageContainer {
+    min-height: clamp(170px, 30vh, 220px);
+  }
+
+  .petImage {
+    height: clamp(180px, 36vh, 220px);
+  }
+
+  .petImageUnhappy {
+    height: clamp(80px, 18vh, 100px);
+  }
+
+  .gameButtonsContainer {
+    padding-top: 16px;
+  }
+
+  .buttonText {
+    font-size: 14px;
+  }
+
+  .buttonIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .gameButton {
+    padding: 8px;
+  }
+
+  .purpleLine {
+    margin: 8px;
+  }
+
+  .dailyTasksBox {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .taskLabel {
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .taskIcon,
+  .taskTickIcon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .progressSegment {
+    height: 14px;
   }
 }
